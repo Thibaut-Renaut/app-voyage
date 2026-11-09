@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import corsica.universita.journalvoyage.BuildConfig
 import corsica.universita.journalvoyage.R
 import corsica.universita.journalvoyage.data.Destinations
 import corsica.universita.journalvoyage.data.onlineFlow
@@ -94,11 +95,6 @@ import kotlinx.coroutines.delay
 
 private const val TAG = "Journal"
 
-/**
- * L'accueil : la page unique de la PWA, section par section, dans le même ordre —
- * en-tête, « Nouvelle étape de … », « Étapes du voyage », « Mes carnets de voyage »,
- * « Destinations inspirantes », pied de page. Plus une section propre à Android : les trajets GPS.
- */
 @Composable
 fun HomeScreen(onOpenEtape: (Long) -> Unit, onOpenTrajet: (Long) -> Unit) {
     val viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory)
@@ -110,12 +106,10 @@ fun HomeScreen(onOpenEtape: (Long) -> Unit, onOpenTrajet: (Long) -> Unit) {
     val context = LocalContext.current
     val online by remember { context.onlineFlow() }.collectAsStateWithLifecycle(initialValue = true)
 
-    // Non null = la caméra est ouverte sur ce fichier (saveable : une rotation ne la ferme pas).
     var cameraTarget by rememberSaveable { mutableStateOf<String?>(null) }
 
     val camera = rememberPermissionFlow(Manifest.permission.CAMERA)
     val location = rememberPermissionFlow(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION, requireAll = false)
-    // « Choisir dans la galerie » : le sélecteur de photos du système, sans aucune permission.
     val gallery = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(10)) { viewModel.importPhotos(it) }
 
     cameraTarget?.let { target ->
@@ -140,7 +134,6 @@ fun HomeScreen(onOpenEtape: (Long) -> Unit, onOpenTrajet: (Long) -> Unit) {
                     if (consent == null) ConsentBanner(onAnswer = viewModel::setConsent)
                 }
             }
-            // 1. Le formulaire (section--form)
             item {
                 EtapeFormSection(
                     activeTitle = state.active?.titre,
@@ -160,7 +153,6 @@ fun HomeScreen(onOpenEtape: (Long) -> Unit, onOpenTrajet: (Long) -> Unit) {
                     onSave = { viewModel.saveEtape(online) },
                 )
             }
-            // 2. L'itinéraire du carnet actif (section--journal)
             item {
                 SectionHeader(
                     stringResource(R.string.journal_label), stringResource(R.string.journal_title), Icons.Outlined.Schedule,
@@ -182,7 +174,6 @@ fun HomeScreen(onOpenEtape: (Long) -> Unit, onOpenTrajet: (Long) -> Unit) {
                     onClick = { onOpenEtape(etape.id) }, onDelete = { viewModel.deleteEtape(etape.id) },
                 )
             }
-            // + La fonctionnalité native : les trajets GPS du carnet actif
             state.active?.let { active ->
                 item {
                     Column(Modifier.padding(start = 16.dp, end = 16.dp, top = 40.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -191,7 +182,6 @@ fun HomeScreen(onOpenEtape: (Long) -> Unit, onOpenTrajet: (Long) -> Unit) {
                     }
                 }
             }
-            // 3. Mes carnets de voyage (section--voyages)
             item {
                 VoyagesHeader(onCreate = viewModel::openCreate)
             }
@@ -202,7 +192,6 @@ fun HomeScreen(onOpenEtape: (Long) -> Unit, onOpenTrajet: (Long) -> Unit) {
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
                 )
             }
-            // 4. Destinations inspirantes (section--destinations)
             item {
                 SectionHeader(
                     stringResource(R.string.destinations_label), stringResource(R.string.destinations_title), Icons.Outlined.Explore,
@@ -215,7 +204,6 @@ fun HomeScreen(onOpenEtape: (Long) -> Unit, onOpenTrajet: (Long) -> Unit) {
             item { Footer() }
         }
 
-        // La barre d'état reste lisible quand la page défile dessous (edge-to-edge).
         Box(Modifier.fillMaxWidth().windowInsetsTopHeight(WindowInsets.statusBars).background(Cream50.copy(alpha = 0.94f)))
         NetworkPill(online, Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(top = 8.dp, end = 64.dp))
         ToastHost(viewModel, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 24.dp))
@@ -224,7 +212,6 @@ fun HomeScreen(onOpenEtape: (Long) -> Unit, onOpenTrajet: (Long) -> Unit) {
     VoyageDialogs(viewModel, dialog)
 }
 
-/** .header : le dégradé vert, la pastille, « Votre Journal, de Voyage. », le sous-titre ; et le menu ⋮ de l'app. */
 @Composable
 private fun Header(consent: Boolean?, viewModel: HomeViewModel) {
     val context = LocalContext.current
@@ -259,7 +246,9 @@ private fun Header(consent: Boolean?, viewModel: HomeViewModel) {
             IconButton(onClick = { menu = true }) { Icon(Icons.Default.MoreVert, stringResource(R.string.more), tint = Green700) }
             DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                 DropdownMenuItem(text = { Text(stringResource(R.string.open_pwa)) }, onClick = { menu = false; context.openPwa() })
-                DropdownMenuItem(text = { Text(stringResource(R.string.copy_token)) }, onClick = { menu = false; context.copyToken(token) })
+                if (BuildConfig.DEBUG) {
+                    DropdownMenuItem(text = { Text(stringResource(R.string.copy_token)) }, onClick = { menu = false; context.copyToken(token) })
+                }
                 DropdownMenuItem(
                     text = { Text(stringResource(if (consent == true) R.string.consent_menu_on else R.string.consent_menu_off)) },
                     onClick = { menu = false; viewModel.setConsent(consent != true) },
@@ -270,7 +259,6 @@ private fun Header(consent: Boolean?, viewModel: HomeViewModel) {
     HorizontalDivider(color = Green200)
 }
 
-/** .network-status : la pastille en haut à droite, 4 s après chaque changement (et au lancement hors ligne). */
 @Composable
 private fun NetworkPill(online: Boolean, modifier: Modifier) {
     var visible by remember { mutableStateOf(false) }
@@ -299,7 +287,6 @@ private fun NetworkPill(online: Boolean, modifier: Modifier) {
     }
 }
 
-/** .toast : la pastille vert sombre en bas de l'écran, 3,5 s. */
 @Composable
 private fun ToastHost(viewModel: HomeViewModel, modifier: Modifier) {
     var current by remember { mutableStateOf<Toast?>(null) }
@@ -323,7 +310,6 @@ private fun ToastHost(viewModel: HomeViewModel, modifier: Modifier) {
     )
 }
 
-/** .footer */
 @Composable
 private fun Footer() {
     Column(

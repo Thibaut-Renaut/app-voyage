@@ -1,14 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Une boussole (l'icône par défaut des carnets de la PWA), dans la zone sûre : 66 dp centrés sur 108. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- cadran : un anneau crème -->
     <path android:fillColor="#FAFAF7"
         android:pathData="M54,26a28,28 0 1,1 0,56a28,28 0 1,1 0,-56z M54,31a23,23 0 1,0 0,46a23,23 0 1,0 0,-46z" />
-    <!-- aiguille nord (crème) et sud (vert clair) -->
     <path android:fillColor="#FAFAF7" android:pathData="M54,34 L60,54 L48,54 Z" />
     <path android:fillColor="#D1DFCC" android:pathData="M54,74 L48,54 L60,54 Z" />
     <path android:fillColor="#2D3E28" android:pathData="M54,51a3,3 0 1,1 0,6a3,3 0 1,1 0,-6z" />

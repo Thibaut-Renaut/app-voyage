@@ -1,29 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Permission « normale » : accordée à l'installation, sans dialogue. -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- L’indicateur réseau (« Mode hors ligne » / « Connexion rétablie ») : permission normale. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <!-- Permissions « dangereuses » : déclarées ici ET demandées à l'exécution (PermissionFlow),
-         au moment où l'utilisateur fait le geste qui en a besoin, jamais au lancement. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <!-- v2 : l'enregistreur de trajet. Permissions « normales » (sans dialogue), exigées par l'OS pour un
-         service de premier plan de type « location » (Android 9+ et 14+). La permission de localisation
-         « pendant l'utilisation » suffit : PAS de ACCESS_BACKGROUND_LOCATION, le service est démarré app ouverte. -->
+    <!-- Service de premier plan « location » : la permission « pendant l'utilisation » suffit,
+         pas d'accès à la position en arrière-plan. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
 
-    <!-- required="false" : l'app reste installable sur un appareil sans caméra. -->
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
-    <!-- Android 11+ : visibilité des paquets, pour trouver un navigateur (« Ouvrir la PWA »)
-         et une app de cartes (geo:) depuis l'app. -->
     <queries>
         <intent>
             <action android:name="android.intent.action.MAIN" />
@@ -44,12 +36,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.JournalVoyage">
 
-        <!-- RGPD : Analytics ne collecte rien tant que l'utilisateur n'a pas accepté (Analytics.kt). -->
+        <!-- Collecte désactivée tant que l'utilisateur n'a pas donné son consentement. -->
         <meta-data
             android:name="firebase_analytics_collection_enabled"
             android:value="false" />
-        <!-- Un message « notification » de la console Firebase, reçu app en arrière-plan, est affiché
-             par la bibliothèque Firebase : sur NOTRE canal et avec NOTRE icône, pas ceux par défaut. -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="messages" />
@@ -57,7 +47,6 @@
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@drawable/ic_notification" />
 
-        <!-- singleTop : un intent reçu alors que l'app est affichée arrive dans onNewIntent. -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -68,7 +57,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Cible de partage : du texte ou une photo reçus d'une autre app deviennent une nouvelle étape. -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -76,8 +64,7 @@
                 <data android:mimeType="image/*" />
             </intent-filter>
 
-            <!-- App Link : à l'installation, l'OS télécharge https://<pwaHost>/.well-known/assetlinks.json
-                 et y cherche ce package et l'empreinte de cette clé. Vérifié → l'URL de la PWA ouvre l'app. -->
+            <!-- App Link vérifié par https://${pwaHost}/.well-known/assetlinks.json -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -86,7 +73,6 @@
             </intent-filter>
         </activity>
 
-        <!-- Donner une photo (ou un GPX) à une autre app sans ouvrir tout le stockage privé. -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -97,14 +83,11 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <!-- v2 : la fonctionnalité native. foregroundServiceType="location" : l'OS sait pourquoi ce service tourne,
-             l'affiche dans le gestionnaire de tâches, et vérifie la permission de localisation à startForeground(). -->
         <service
             android:name=".tracking.TrackingService"
             android:exported="false"
             android:foregroundServiceType="location" />
 
-        <!-- Réception FCM. exported="false" : seul Play Services (via la lib Firebase) lui parle. -->
         <service
             android:name=".notif.JournalMessagingService"
             android:exported="false">

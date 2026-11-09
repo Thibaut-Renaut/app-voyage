@@ -1,9 +1,5 @@
 package corsica.universita.journalvoyage.data
 
-/**
- * Le contenu statique de la PWA (index.html) : la section « Destinations inspirantes »
- * et l'itinéraire de démonstration. Mêmes textes, mêmes images (assets/seed/).
- */
 data class Destination(val nom: String, val etapeTitre: String, val lieu: String, val description: String, val image: String)
 
 object Destinations {

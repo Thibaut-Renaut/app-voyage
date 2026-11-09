@@ -52,7 +52,6 @@ import corsica.universita.journalvoyage.ui.theme.Green900
 import corsica.universita.journalvoyage.ui.theme.RadiusMd
 import corsica.universita.journalvoyage.ui.theme.RadiusSm
 
-/** Les modales de la PWA : #modal-create-voyage, #modal-edit-voyage, #modal-delete-voyage, #modal-switch-voyage. */
 @Composable
 fun VoyageDialogs(viewModel: HomeViewModel, dialog: VoyageDialog) {
     when (dialog) {
@@ -68,7 +67,6 @@ fun VoyageDialogs(viewModel: HomeViewModel, dialog: VoyageDialog) {
 private fun VoyageFormDialog(viewModel: HomeViewModel, editing: Boolean) {
     val form by viewModel.voyageForm.collectAsStateWithLifecycle()
     val editingId by viewModel.dialogVoyageId.collectAsStateWithLifecycle()
-    // Le sélecteur de photos du système : aucune permission.
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri -> uri?.let(viewModel::setCover) }
 
     ModalCard(
@@ -152,7 +150,6 @@ private fun SwitchDialog(viewModel: HomeViewModel) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             state.voyages.forEach { v ->
                 val current = v.id == state.active?.id
-                // .switch-voyage-item (.is-selected pour le carnet actif)
                 Row(
                     Modifier
                         .fillMaxWidth()

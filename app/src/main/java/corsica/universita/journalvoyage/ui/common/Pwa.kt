@@ -67,11 +67,6 @@ import corsica.universita.journalvoyage.ui.theme.RadiusMd
 import corsica.universita.journalvoyage.ui.theme.RadiusSm
 import corsica.universita.journalvoyage.ui.theme.SectionLabel
 
-/*
- * Les composants de la PWA, un par classe CSS : même rendu sur le téléphone que dans le navigateur.
- */
-
-/** .section__label + .section__title (avec son icône). */
 @Composable
 fun SectionHeader(label: String, title: String, icon: ImageVector, modifier: Modifier = Modifier) {
     Column(modifier) {
@@ -83,7 +78,6 @@ fun SectionHeader(label: String, title: String, icon: ImageVector, modifier: Mod
     }
 }
 
-/** .btn--primary : vert plein, toute la largeur. */
 @Composable
 fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
     Button(
@@ -94,7 +88,6 @@ fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifi
     ) { Text(text, fontWeight = FontWeight.SemiBold, fontSize = 15.sp) }
 }
 
-/** .btn--secondary (vert pâle) ou .btn--outline (contour), en taille .btn--sm. */
 @Composable
 fun SmallButton(
     text: String,
@@ -131,7 +124,6 @@ fun SmallButton(
     }
 }
 
-/** .photo-upload-btn et .btn--geo : blanc ou vert très pâle, bordure verte, icône + texte centrés. */
 @Composable
 fun SoftButton(text: String, icon: ImageVector, onClick: () -> Unit, modifier: Modifier = Modifier, background: Color = Color.White) {
     OutlinedButton(
@@ -145,7 +137,6 @@ fun SoftButton(text: String, icon: ImageVector, onClick: () -> Unit, modifier: M
     }
 }
 
-/** .form__group : le libellé en capitales, puis le champ (.form__input / .form__textarea). */
 @Composable
 fun FormField(
     label: String,
@@ -177,11 +168,9 @@ fun FormField(
     }
 }
 
-/** .form__label seul. */
 @Composable
 fun FieldLabel(text: String) = Text(text.uppercase(), style = FormLabel, color = Gray700)
 
-/** .photo-upload-zone : la zone en pointillés vert pâle. */
 @Composable
 fun DashedZone(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Box(
@@ -200,7 +189,6 @@ fun DashedZone(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     ) { content() }
 }
 
-/** .modal-card : la fenêtre de la PWA (pastille, titre Fraunces, sous-titre, croix de fermeture). */
 @Composable
 fun ModalCard(
     badge: String,
@@ -243,7 +231,6 @@ fun ModalCard(
     }
 }
 
-/** .btn--danger : rouge plein. */
 @Composable
 fun DangerButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Button(
@@ -253,7 +240,6 @@ fun DangerButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifie
     ) { Text(text, fontWeight = FontWeight.SemiBold, fontSize = 14.sp) }
 }
 
-/** .journal-entry__status : la pastille « Synchronisé » / « En attente de sync ». */
 @Composable
 fun Pill(text: String, icon: ImageVector, background: Color, color: Color, modifier: Modifier = Modifier) {
     Row(
@@ -265,6 +251,5 @@ fun Pill(text: String, icon: ImageVector, background: Color, color: Color, modif
     }
 }
 
-/** .card : fond blanc, bordure grise, rayon md. */
 fun Modifier.pwaCard(radius: Shape = RadiusMd, borderColor: Color = Gray200, borderWidth: Float = 1f) =
     this.clip(radius).background(Color.White).border(borderWidth.dp, borderColor, radius)

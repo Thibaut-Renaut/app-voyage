@@ -12,11 +12,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * La migration v1 → v2, testée sur un appareil (./gradlew connectedDebugAndroidTest) :
- * une base v1 avec un voyage, une étape et une photo est migrée ; Room compare le schéma obtenu
- * à schemas/…/2.json (validateDroppedTables), puis on vérifie que rien n'a été perdu.
- */
 @RunWith(AndroidJUnit4::class)
 class MigrationTest {
     private val dbName = "migration-test.db"
@@ -33,10 +28,8 @@ class MigrationTest {
             close()
         }
 
-        // Exécute MIGRATION_1_2 et valide le schéma obtenu contre 2.json : une colonne ou un index de travers → échec.
         helper.runMigrationsAndValidate(dbName, 2, true, JournalDatabase.MIGRATION_1_2).close()
 
-        // Puis la vraie base, comme l'app l'ouvre (1→2→3 enchaînées) : les données v1 sont là, les nouvelles tables utilisables.
         val db = Room.databaseBuilder(InstrumentationRegistry.getInstrumentation().targetContext, JournalDatabase::class.java, dbName)
             .addMigrations(JournalDatabase.MIGRATION_1_2, JournalDatabase.MIGRATION_2_3)
             .build()
@@ -47,13 +40,12 @@ class MigrationTest {
             val etape = db.etapeDao().observe(1).first()!!
             assertEquals("Bastia", etape.etape.titre)
             assertEquals(1, etape.photos.size)
-            assertEquals(1, db.etapeDao().unsynced().size) // l'étape en attente d'envoi l'est toujours
+            assertEquals(1, db.etapeDao().unsynced().size)
             assertEquals(0, db.trajetDao().forVoyage(1).first().size)
         }
         db.close()
     }
 
-    /** v2 → v3 : la colonne trajets.nom ajoutée ; le trajet et ses points restent, sans nom. */
     @Test
     fun migrate2To3_ajoute_le_nom_des_trajets() {
         val name = "migration-2-3.db"

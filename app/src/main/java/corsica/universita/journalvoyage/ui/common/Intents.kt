@@ -13,11 +13,6 @@ import corsica.universita.journalvoyage.R
 import corsica.universita.journalvoyage.data.Etape
 import java.util.Locale
 
-/**
- * Partager une étape (ACTION_SEND, intent implicite : l'OS liste les apps qui l'acceptent), photos comprises.
- * Les photos sont dans le stockage privé : le FileProvider en fait des URI content://, et
- * FLAG_GRANT_READ_URI_PERMISSION donne à l'app choisie le droit de lire ces fichiers, pour cette fois.
- */
 fun Context.shareEtape(etape: Etape) {
     val text = buildString {
         append(etape.titre).append("\n\n").append(etape.description)
@@ -41,7 +36,6 @@ fun Context.shareEtape(etape: Etape) {
     startActivity(Intent.createChooser(send, getString(R.string.share_title)))
 }
 
-/** Ouvrir la position dans l'app de cartes (geo:), comme le lien Google Maps de la PWA. */
 fun Context.openMap(lat: Double, lng: Double, label: String) {
     val uri = Uri.parse(String.format(Locale.ROOT, "geo:%.6f,%.6f?q=%.6f,%.6f(%s)", lat, lng, lat, lng, Uri.encode(label)))
     try {
@@ -51,10 +45,6 @@ fun Context.openMap(lat: Double, lng: Double, label: String) {
     }
 }
 
-/**
- * Ouvrir la PWA. L'App Link vérifié renverrait cette URL… vers l'app elle-même :
- * le sélecteur CATEGORY_APP_BROWSER force un navigateur.
- */
 fun Context.openPwa() {
     val view = Intent(Intent.ACTION_VIEW, Uri.parse("https://${BuildConfig.PWA_HOST}/")).apply {
         selector = Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_BROWSER)
@@ -62,7 +52,6 @@ fun Context.openPwa() {
     startActivity(view)
 }
 
-/** « Copier mon jeton », à coller dans la console Firebase (Messaging › « Envoyer un message de test »). */
 fun Context.copyToken(token: String?) {
     if (token == null) {
         Toast.makeText(this, R.string.token_unavailable, Toast.LENGTH_LONG).show()

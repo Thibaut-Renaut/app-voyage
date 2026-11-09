@@ -98,7 +98,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/** Ce que l'écran doit faire une fois l'export prêt : le ViewModel ne touche jamais à l'interface. */
 sealed interface GpxEvent {
     data object Saved : GpxEvent
     data class Share(val uri: Uri) : GpxEvent
@@ -111,17 +110,14 @@ class TrajetViewModel(private val trajetId: Long) : ViewModel() {
     private val _events = Channel<GpxEvent>(Channel.BUFFERED)
     val events: Flow<GpxEvent> = _events.receiveAsFlow()
 
-    /** null = pas encore lu ; Loaded(null) = supprimé. */
     val trajet: StateFlow<Loaded?> = repository.observeTrajet(trajetId).map { Loaded(it) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    /** Les points, observés dans Room : écrits par le service, ils apparaissent ici en direct. */
     val points: StateFlow<List<TrackPoint>> = repository.trackPoints(trajetId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     data class Loaded(val trajet: Trajet?)
 
-    /** Les étapes du voyage du trajet : pour composer un nom « De <étape> à <étape> ». */
     @OptIn(ExperimentalCoroutinesApi::class)
     val etapes: StateFlow<List<Etape>> = repository.observeTrajet(trajetId)
         .flatMapLatest { t -> if (t == null) flowOf(emptyList()) else repository.etapes(t.voyageId) }
@@ -131,13 +127,11 @@ class TrajetViewModel(private val trajetId: Long) : ViewModel() {
         viewModelScope.launch { repository.renameTrajet(trajetId, nom) }
     }
 
-    /** Le GPX du trajet ; `fallbackName` (« Trajet du … ») sert tant que le trajet n'a pas de nom. */
     private suspend fun gpx(fallbackName: String): String? {
         val t = trajet.value?.trajet ?: return null
         return TrackMath.toGpx(t.nom ?: fallbackName, repository.trackPointsOnce(trajetId))
     }
 
-    /** « Enregistrer le GPX » : écrit là où l'utilisateur l'a choisi (Téléchargements, Drive…). */
     fun saveGpx(uri: Uri, fallbackName: String) {
         viewModelScope.launch {
             val text = gpx(fallbackName) ?: return@launch
@@ -146,7 +140,6 @@ class TrajetViewModel(private val trajetId: Long) : ViewModel() {
         }
     }
 
-    /** « Partager le GPX » : un fichier temporaire, confié à l'app choisie par l'utilisateur. */
     fun shareGpx(fallbackName: String) {
         viewModelScope.launch {
             val text = gpx(fallbackName) ?: return@launch
@@ -162,7 +155,6 @@ class TrajetViewModel(private val trajetId: Long) : ViewModel() {
     }
 }
 
-/** Un trajet : le tracé dessiné en direct pendant l'enregistrement, ses statistiques, l'export GPX. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrajetScreen(trajetId: Long, onBack: () -> Unit) {
@@ -176,11 +168,9 @@ fun TrajetScreen(trajetId: Long, onBack: () -> Unit) {
     var naming by rememberSaveable { mutableStateOf(false) }
     val etapes by viewModel.etapes.collectAsStateWithLifecycle()
     val fallbackName = loaded?.trajet?.let { stringResource(R.string.trajet_title, it.startedAt.toDateTime()) }.orEmpty()
-    // « Enregistrer le GPX » : le sélecteur de fichiers du système (aucune permission de stockage).
     val saveLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/gpx+xml")) { uri ->
         uri?.let { viewModel.saveGpx(it, fallbackName) }
     }
-    // Les événements d'export : un message, ou le sélecteur de partage.
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
@@ -190,7 +180,6 @@ fun TrajetScreen(trajetId: Long, onBack: () -> Unit) {
         }
     }
 
-    // Pendant l'enregistrement, la durée avance chaque seconde, même sans nouveau point.
     val now by produceState(System.currentTimeMillis(), live) {
         while (live) { value = System.currentTimeMillis(); delay(1_000) }
     }
@@ -269,7 +258,7 @@ fun TrajetScreen(trajetId: Long, onBack: () -> Unit) {
                 Button(
                     onClick = {
                         TrackingService.stop(context)
-                        if (trajet.nom == null) naming = true // à l'arrêt, on propose de nommer le trajet
+                        if (trajet.nom == null) naming = true
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                     modifier = Modifier.fillMaxWidth(),
@@ -301,17 +290,12 @@ fun TrajetScreen(trajetId: Long, onBack: () -> Unit) {
     }
 }
 
-/** « de_bavella_a_piana.gpx » : un nom de fichier sans accents ni espaces, lisible partout. */
 private fun gpxFileName(t: Trajet): String {
     val base = java.text.Normalizer.normalize(t.nom ?: "trajet_${t.id}", java.text.Normalizer.Form.NFD)
         .replace(Regex("\\p{M}"), "").lowercase().replace(Regex("[^a-z0-9]+"), "_").trim('_')
     return "${base.ifEmpty { "trajet" }}.gpx"
 }
 
-/**
- * Nommer un trajet. Le champ est libre ; les deux listes proposent les étapes du voyage
- * et composent « De <étape> à <étape> » (le cas d'usage : le trajet entre deux étapes).
- */
 @Composable
 private fun NameTrajetDialog(initial: String, etapes: List<Etape>, onDismiss: () -> Unit, onSave: (String) -> Unit) {
     var nom by rememberSaveable { mutableStateOf(initial) }
@@ -363,7 +347,6 @@ private fun EtapePicker(label: String, selected: String?, titres: List<String>, 
     }
 }
 
-/** Le GPX vers une autre app (Drive, e-mail…). FLAG_GRANT_READ_URI_PERMISSION : elle ne lit que ce fichier. */
 private fun Context.shareGpx(uri: Uri) {
     val send = Intent(Intent.ACTION_SEND).apply {
         type = "application/gpx+xml"
@@ -381,11 +364,6 @@ private fun Stat(label: String, value: String, modifier: Modifier = Modifier) {
     }
 }
 
-/**
- * Le tracé, dessiné à la main sur un Canvas : pas de SDK de cartes (ni clé d'API, ni tuiles à télécharger
- * hors ligne). Projection équirectangulaire : la longitude est multipliée par cos(latitude), sinon le
- * tracé serait étiré d'est en ouest (en Corse, un degré de longitude ≈ 0,74 degré de latitude).
- */
 @Composable
 private fun TrackCanvas(points: List<TrackPoint>, modifier: Modifier) {
     val line = MaterialTheme.colorScheme.primary
@@ -394,6 +372,7 @@ private fun TrackCanvas(points: List<TrackPoint>, modifier: Modifier) {
     Box(modifier.background(MaterialTheme.colorScheme.surfaceVariant)) {
         if (points.isEmpty()) return@Box
         Canvas(Modifier.fillMaxSize().padding(24.dp)) {
+            // Projection équirectangulaire : la longitude est corrigée par cos(latitude).
             val k = cos(Math.toRadians(points.map { it.lat }.average()))
             val xs = points.map { it.lng * k }
             val ys = points.map { it.lat }
@@ -404,7 +383,7 @@ private fun TrackCanvas(points: List<TrackPoint>, modifier: Modifier) {
             val offY = (size.height - (maxY - minY) * scale) / 2
             fun at(i: Int) = Offset(
                 (offX + (xs[i] - minX) * scale).toFloat(),
-                (offY + (maxY - ys[i]) * scale).toFloat(), // le nord en haut
+                (offY + (maxY - ys[i]) * scale).toFloat(),
             )
             val path = Path().apply {
                 moveTo(at(0).x, at(0).y)

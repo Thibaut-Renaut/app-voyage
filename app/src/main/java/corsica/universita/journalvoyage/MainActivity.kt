@@ -19,18 +19,15 @@ import kotlinx.coroutines.launch
 
 private const val TAG = "Journal"
 
-/** L'unique Activity : lancée par l'OS sur MAIN / LAUNCHER, SEND (texte, photo), VIEW https://<pwa>, ou un clic de notification. */
 class MainActivity : ComponentActivity() {
-
     private val appViewModel: AppViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen() // avant super.onCreate : l'écran de démarrage, puis Theme.JournalVoyage.Main
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate — Bundle ${if (savedInstanceState == null) "null (premier lancement)" else "présent (recréation)"}")
 
-        // Seulement au premier lancement : après une rotation, le même intent serait retraité
-        // (et l'étape partagée créée deux fois).
+        // Uniquement au premier lancement : après une rotation, l'intent serait traité deux fois.
         if (savedInstanceState == null) {
             lifecycleScope.launch { JournalContainer.analytics.sessionStarted() }
             handleIntent(intent)
@@ -44,15 +41,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // launchMode="singleTop" : si l'app est déjà au premier plan, l'OS livre l'intent ici.
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         handleIntent(intent)
     }
 
     private fun handleIntent(intent: Intent) {
-        // Clic sur une notification. Nos PendingIntent posent un Long ; la console Firebase, elle, pose ses
-        // « données personnalisées » en String : on accepte les deux.
         val etapeId = intent.longOrStringExtra(Notifications.EXTRA_ETAPE_ID)
         val voyageId = intent.longOrStringExtra(Notifications.EXTRA_VOYAGE_ID)
         val trajetId = intent.longOrStringExtra(Notifications.EXTRA_TRAJET_ID)
@@ -82,9 +76,10 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // Les données personnalisées de la console Firebase arrivent sous forme de String.
     private fun Intent.longOrStringExtra(key: String): Long? {
         if (!hasExtra(key)) return null
-        val asLong = getLongExtra(key, Long.MIN_VALUE) // un extra String → la valeur par défaut
+        val asLong = getLongExtra(key, Long.MIN_VALUE)
         return if (asLong != Long.MIN_VALUE) asLong else getStringExtra(key)?.toLongOrNull()
     }
 

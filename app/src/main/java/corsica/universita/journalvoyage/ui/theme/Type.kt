@@ -10,11 +10,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import corsica.universita.journalvoyage.R
 
-/*
- * Les deux polices de la PWA (Google Fonts), embarquées dans res/font (licence OFL, docs/licences/) :
- * pas de téléchargement au lancement, elles marchent hors ligne. Ce sont des polices « variables » :
- * un seul fichier, la graisse est choisie par FontVariation.
- */
 private fun fraunces(weight: Int, italic: Boolean = false) = Font(
     if (italic) R.font.fraunces_italic else R.font.fraunces,
     weight = FontWeight(weight),
@@ -28,10 +23,8 @@ private fun jakarta(weight: Int) = Font(
     variationSettings = FontVariation.Settings(FontVariation.weight(weight)),
 )
 
-/** --font-display : les titres. */
 val Fraunces = FontFamily(fraunces(600), fraunces(700), fraunces(800), fraunces(600, italic = true), fraunces(700, italic = true))
 
-/** --font-body : tout le reste. */
 val PlusJakartaSans = FontFamily(jakarta(400), jakarta(500), jakarta(600), jakarta(700), jakarta(800))
 
 private val base = Typography()
@@ -51,6 +44,5 @@ val JournalTypography = Typography(
     labelSmall = base.labelSmall.copy(fontFamily = PlusJakartaSans, fontWeight = FontWeight.SemiBold),
 )
 
-/** Les petits libellés en capitales de la PWA (.section__label, .form__label). */
 val SectionLabel = TextStyle(fontFamily = PlusJakartaSans, fontWeight = FontWeight.Bold, fontSize = 11.5.sp, letterSpacing = 1.sp)
 val FormLabel = TextStyle(fontFamily = PlusJakartaSans, fontWeight = FontWeight.Bold, fontSize = 12.5.sp, letterSpacing = 0.7.sp)

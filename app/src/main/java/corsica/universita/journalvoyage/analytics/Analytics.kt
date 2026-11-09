@@ -11,20 +11,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
-/**
- * La mesure : savoir ce que font les utilisateurs, comme pour la PWA — mais ni cookie ni navigateur :
- * le SDK Firebase est dans le process. logEvent() écrit l'événement dans une file sur le disque ;
- * le SDK l'envoie par lots, plus tard (hors ligne, il attend sur le téléphone, comme l'outbox).
- *
- * Trois événements, et les trois seuls que l'app pose elle-même :
- *  1. Activation : `first_etape_created`, le premier geste utile (une fois par installation).
- *  2. Rétention  : `return_visit` (une session un autre jour) et `notif_clicked` (une notification ouverte).
- *  3. Le natif   : `trajet_started`, `trajet_completed`, `trajet_failed` (utilisée ? réussie ?).
- *
- * RGPD : la collecte est coupée dans le manifest (firebase_analytics_collection_enabled = false) et n'est
- * activée qu'après un « Accepter » explicite, gardé dans DataStore. Refus = rien ne part.
- * Chaque événement est aussi écrit dans Logcat (adb logcat -s Journal) : vérifiable sans console Firebase.
- */
+/** Mesure d'audience (Firebase Analytics), active uniquement après consentement explicite. */
 class Analytics(context: Context, private val settings: Settings, private val scope: CoroutineScope) {
     private val firebase = FirebaseAnalytics.getInstance(context)
 
@@ -37,40 +24,30 @@ class Analytics(context: Context, private val settings: Settings, private val sc
         }
     }
 
-    // ---- 1. Activation ----
-
     suspend fun etapeCreated(photos: Int, withLocation: Boolean) {
         if (settings.claimFirstEtape()) {
             log("first_etape_created", "photos" to photos.toLong(), "with_location" to if (withLocation) 1L else 0L)
         }
     }
 
-    // ---- 2. Rétention ----
-
-    /** Appelé à chaque lancement de l'Activity (pas à la rotation). */
     suspend fun sessionStarted() {
         val today = LocalDate.now().toEpochDay()
-        val previous = settings.swapSessionDay(today) ?: return // première session : rien à mesurer
+        val previous = settings.swapSessionDay(today) ?: return
         if (previous != today) log("return_visit", "days_since_last" to (today - previous))
     }
 
-    /** type : « push » (message FCM), « sync » (compte rendu d'envoi), « trajet » (enregistrement en cours). */
     fun notificationClicked(type: String) = log("notif_clicked", "type" to type)
-
-    // ---- 3. La fonctionnalité native ----
 
     fun trajetStarted() = log("trajet_started")
 
     fun trajetCompleted(points: Int, distanceM: Long, durationS: Long) =
         log("trajet_completed", "points" to points.toLong(), "distance_m" to distanceM, "duration_s" to durationS)
 
-    /** reason : permission_denied, location_off, fgs_not_allowed… : un échec mesuré vaut mieux qu'un échec caché. */
     fun trajetFailed(reason: String) = log("trajet_failed", "reason" to reason)
 
     /**
-     * Le consentement est relu dans DataStore à chaque événement, avant l'envoi : au démarrage à froid
-     * (clic sur une notification, retour dans l'app), l'événement part avant que le collecteur de init
-     * n'ait lu DataStore — sans cette lecture, notif_clicked et return_visit étaient perdus.
+     * Le consentement est relu à chaque événement : au démarrage à froid (clic sur une notification),
+     * l'événement est émis avant que le collecteur de `init` n'ait lu DataStore.
      */
     private fun log(name: String, vararg params: Pair<String, Any>) {
         val bundle = Bundle().apply {

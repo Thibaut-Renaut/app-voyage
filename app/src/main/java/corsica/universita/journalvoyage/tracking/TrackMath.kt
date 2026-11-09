@@ -8,7 +8,6 @@ import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-/** Un point du tracé, tel que les calculs et l'écran le voient (sans Android : testable en JUnit pur). */
 data class TrackPoint(val lat: Double, val lng: Double, val altitude: Double?, val accuracy: Float, val time: Long)
 
 data class TrackStats(
@@ -18,13 +17,9 @@ data class TrackStats(
     val avgSpeedKmh: Double,
 )
 
-/**
- * Les calculs du tracé, en Kotlin pur (aucune API Android) : testés par TrackMathTest, sur la JVM du PC.
- */
 object TrackMath {
     private const val EARTH_RADIUS_M = 6_371_008.8
 
-    /** Distance à vol d'oiseau entre deux points (formule de haversine), en mètres. */
     fun distance(lat1: Double, lng1: Double, lat2: Double, lng2: Double): Double {
         val dLat = Math.toRadians(lat2 - lat1)
         val dLng = Math.toRadians(lng2 - lng1)
@@ -32,11 +27,8 @@ object TrackMath {
         return 2 * EARTH_RADIUS_M * asin(sqrt(a))
     }
 
-    /**
-     * Garder un relevé ? Non s'il est trop imprécis (> 50 m : un relevé Wi-Fi en intérieur), ou s'il est
-     * à moins de 3 m du précédent (le « bruit » GPS d'un marcheur arrêté gonflerait la distance).
-     */
     fun accept(previous: TrackPoint?, next: TrackPoint): Boolean {
+        // Rejette les relevés imprécis et le bruit GPS à l'arrêt, qui gonflerait la distance.
         if (next.accuracy > 50f) return false
         if (previous == null) return true
         return distance(previous.lat, previous.lng, next.lat, next.lng) >= 3.0
@@ -55,10 +47,7 @@ object TrackMath {
         )
     }
 
-    /**
-     * Dénivelé positif cumulé, avec un seuil de 3 m : l'altitude GPS oscille de quelques mètres ;
-     * additionner chaque petite montée compterait des dizaines de mètres sur du plat.
-     */
+    /** Dénivelé positif avec un seuil, pour ignorer les oscillations de l'altitude GPS. */
     fun elevationGain(altitudes: List<Double>, threshold: Double = 3.0): Double {
         if (altitudes.isEmpty()) return 0.0
         var gain = 0.0
@@ -81,10 +70,6 @@ object TrackMath {
         else String.format(Locale.ROOT, "%d min %02d s", s / 60, s % 60)
     }
 
-    /**
-     * Le tracé au format GPX 1.1, que lisent Strava, Komoot, OsmAnd, Google Earth…
-     * Les coordonnées en Locale.ROOT : un « 42,7 » à la française rendrait le fichier illisible.
-     */
     fun toGpx(name: String, points: List<TrackPoint>): String = buildString {
         append("""<?xml version="1.0" encoding="UTF-8"?>""").append('\n')
         append("""<gpx version="1.1" creator="Journal de Voyage" xmlns="http://www.topografix.com/GPX/1/1">""").append('\n')

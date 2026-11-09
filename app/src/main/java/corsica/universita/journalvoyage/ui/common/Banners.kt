@@ -29,11 +29,6 @@ import corsica.universita.journalvoyage.notif.Notifications
 import corsica.universita.journalvoyage.ui.permissions.PermissionState
 import corsica.universita.journalvoyage.ui.permissions.rememberPermissionFlow
 
-/**
- * POST_NOTIFICATIONS, demandée après un geste de l'utilisateur (ce bouton), jamais au lancement.
- * Affiché tant que areNotificationsEnabled() est faux : permission refusée ou notifications coupées dans les réglages.
- * Après un refus, le bouton mène aux réglages de notification de l'app : l'app marche sans.
- */
 @Composable
 fun NotificationsBanner() {
     val context = LocalContext.current
@@ -62,7 +57,6 @@ fun NotificationsBanner() {
     )
 }
 
-/** RGPD : la question posée une fois, avant toute collecte. Le choix se change ensuite dans le menu. */
 @Composable
 fun ConsentBanner(onAnswer: (Boolean) -> Unit) {
     InfoCard(

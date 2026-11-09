@@ -99,8 +99,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-// ======================== 1. « Nouvelle étape de … » (section--form) ========================
-
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun EtapeFormSection(
@@ -120,7 +118,6 @@ fun EtapeFormSection(
     onLocate: () -> Unit,
     onSave: () -> Unit,
 ) {
-    // Les permissions, demandées au geste : le bouton garde le style de la PWA, la machine à états fait le reste.
     val cameraGate = rememberPermissionGate(cameraFlow, stringResource(R.string.take_photo), stringResource(R.string.camera_rationale))
     val locationGate = rememberPermissionGate(locationFlow, stringResource(R.string.add_location), stringResource(R.string.location_rationale))
 
@@ -139,14 +136,12 @@ fun EtapeFormSection(
                 )
             }
         }
-        // .voyage-selector-actions
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             SmallButton(stringResource(R.string.edit_active_voyage), onEditActive, Modifier.weight(1f), icon = Icons.Outlined.Edit)
             SmallButton(stringResource(R.string.switch_voyage), onSwitch, Modifier.weight(1f), icon = Icons.Outlined.SwapHoriz)
         }
         SmallButton(stringResource(R.string.new_carnet), onNewVoyage, Modifier.fillMaxWidth(), icon = Icons.Outlined.Add, outline = true)
 
-        // .form : la carte blanche
         Column(
             Modifier.fillMaxWidth().pwaCard(RadiusLg).padding(horizontal = 16.dp, vertical = 18.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp),
@@ -181,7 +176,6 @@ fun EtapeFormSection(
 
             HorizontalDivider(color = Gray200)
 
-            // .form__group--geo
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 FieldLabel(stringResource(R.string.gps_label))
                 FormField("", form.lat?.let { String.format(Locale.ROOT, "%.6f", it) } ?: "", {}, stringResource(R.string.latitude), readOnly = true, showLabel = false)
@@ -209,16 +203,12 @@ fun EtapeFormSection(
     }
 }
 
-// ======================== 2. La timeline (section--journal) ========================
-
 private val dateFr = SimpleDateFormat("d MMM yyyy", Locale.FRANCE)
 
-/** .journal-entry : la pastille numérotée sur le trait vertical, puis la carte. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TimelineEntry(number: Int, etape: Etape, last: Boolean, onClick: () -> Unit, onDelete: () -> Unit) {
     Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min).padding(horizontal = 16.dp)) {
-        // .journal-list::before (le trait) + .journal-entry__dot (la pastille)
         Box(Modifier.width(36.dp).fillMaxHeight()) {
             Canvas(Modifier.fillMaxSize()) {
                 val x = 15.dp.toPx()
@@ -240,7 +230,6 @@ fun TimelineEntry(number: Int, etape: Etape, last: Boolean, onClick: () -> Unit,
             }
             Text(etape.description, fontSize = 14.5.sp, lineHeight = 23.sp, color = Gray700, modifier = Modifier.padding(top = 6.dp, bottom = 12.dp))
             if (etape.photos.isNotEmpty()) {
-                // .journal-entry__photos : des vignettes de 90 px de haut
                 etape.photos.chunked(3).forEach { row ->
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 8.dp)) {
                         row.forEach { p -> PhotoImage(p, maxPx = 400, contentDescription = null, modifier = Modifier.weight(1f).height(90.dp).clip(RadiusSm).border(1.dp, Gray200, RadiusSm)) }
@@ -250,7 +239,6 @@ fun TimelineEntry(number: Int, etape: Etape, last: Boolean, onClick: () -> Unit,
                 Spacer(Modifier.height(4.dp))
             }
             HorizontalDivider(color = Gray200)
-            // .journal-entry__footer : GPS · statut · Supprimer
             FlowRow(
                 Modifier.fillMaxWidth().padding(top = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -276,14 +264,11 @@ fun TimelineEntry(number: Int, etape: Etape, last: Boolean, onClick: () -> Unit,
     }
 }
 
-/** .journal-entry__status--synced / --pending */
 @Composable
 fun SyncPill(synced: Boolean) {
     if (synced) Pill(stringResource(R.string.synced), Icons.Outlined.Check, Green100, Green700)
     else Pill(stringResource(R.string.pending_sync), Icons.Outlined.Schedule, AmberBg, AmberText)
 }
-
-// ======================== 3. Mes carnets de voyage (section--voyages) ========================
 
 @Composable
 fun VoyagesHeader(onCreate: () -> Unit) {
@@ -293,7 +278,6 @@ fun VoyagesHeader(onCreate: () -> Unit) {
     }
 }
 
-/** .voyage-card : la photo vitrine (ou la boussole), le badge « Carnet actif », les actions. */
 @Composable
 fun VoyageCard(voyage: Voyage, active: Boolean, onOpen: () -> Unit, onEdit: () -> Unit, onDelete: () -> Unit, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth().pwaCard(borderColor = if (active) Green600 else Gray200, borderWidth = if (active) 1.5f else 1f)) {
@@ -301,7 +285,6 @@ fun VoyageCard(voyage: Voyage, active: Boolean, onOpen: () -> Unit, onEdit: () -
             if (voyage.coverPath != null) {
                 PhotoImage(voyage.coverPath, maxPx = 1080, contentDescription = null, modifier = Modifier.fillMaxSize())
             } else {
-                // .destination-card__media--placeholder
                 Column(
                     Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Green100, Green200))),
                     horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
@@ -340,8 +323,6 @@ fun VoyageCard(voyage: Voyage, active: Boolean, onOpen: () -> Unit, onEdit: () -
         }
     }
 }
-
-// ======================== 4. Destinations inspirantes (section--destinations) ========================
 
 @Composable
 fun DestinationCard(d: Destination, modifier: Modifier = Modifier) {

@@ -26,22 +26,12 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import corsica.universita.journalvoyage.R
 
-/**
- * Une permission n'est pas un booléen.
- *
- *   NotAsked ──demande──▶ Granted ◀──────────────┐
- *      │                                         │ redemande, après explication
- *      └──refus──▶ DeniedOnce ───────────────────┘
- *                     └──2ᵉ refus──▶ DeniedForever : l'OS n'affiche plus le dialogue,
- *                                    seule issue : les réglages de l'app.
- * Et l'état change aussi sans l'app (réglages, révocation, « une fois ») : il se relit à ON_RESUME.
- */
+/** NotAsked → Granted, ou DeniedOnce (explication avant de redemander) → DeniedForever (seuls les réglages permettent de l'accorder). */
 enum class PermissionState { NotAsked, Granted, DeniedOnce, DeniedForever }
 
 class PermissionFlow internal constructor(
     private val activity: Activity,
     val permissions: List<String>,
-    /** false : une seule suffit (position : COARSE seule = approximative, ce n'est pas un refus). */
     private val requireAll: Boolean,
     private val askedBefore: () -> Boolean,
     private val markAsked: () -> Unit,
@@ -58,13 +48,9 @@ class PermissionFlow internal constructor(
 
     private fun granted() = if (requireAll) permissions.all(::isGranted) else permissions.any(::isGranted)
 
-    /** true après un refus : l'OS accepterait de redemander, à condition d'expliquer d'abord. */
     private fun rationale() = permissions.any { ActivityCompat.shouldShowRequestPermissionRationale(activity, it) }
 
-    /**
-     * L'OS ne répond qu'à deux questions (accordée ? expliquer ?). « Jamais demandée » et « refusée
-     * définitivement » y répondent pareil (DENIED, false) : seul le drapeau `askedBefore`, gardé par l'app, les sépare.
-     */
+    // Android répond de la même façon pour « jamais demandée » et « refusée définitivement » : askedBefore les distingue.
     private fun compute(afterResult: Boolean) = when {
         granted() -> PermissionState.Granted
         rationale() -> PermissionState.DeniedOnce
@@ -76,7 +62,6 @@ class PermissionFlow internal constructor(
         state = compute(afterResult = false)
     }
 
-    /** Affiche le dialogue de l'OS — qui ne s'affichera pas en DeniedForever (réponse false immédiate). */
     fun request(onGranted: () -> Unit = {}, onDenied: () -> Unit = {}) {
         this.onGranted = onGranted
         this.onDenied = onDenied
@@ -106,7 +91,7 @@ class PermissionFlow internal constructor(
 @Composable
 fun rememberPermissionFlow(vararg permissions: String, requireAll: Boolean = true): PermissionFlow {
     val activity = LocalActivity.current!!
-    var asked by rememberSaveable(*permissions) { mutableStateOf(false) } // « déjà demandée ? »
+    var asked by rememberSaveable(*permissions) { mutableStateOf(false) }
     val flow = remember(*permissions) {
         PermissionFlow(activity, permissions.toList(), requireAll, { asked }, { asked = true })
     }
@@ -114,7 +99,6 @@ fun rememberPermissionFlow(vararg permissions: String, requireAll: Boolean = tru
         flow.onResult(it)
     }
     flow.attach(launcher)
-    // Au retour des réglages (ou après une révocation), l'état réel est relu.
     LifecycleResumeEffect(flow) {
         flow.refresh()
         onPauseOrDispose { }
@@ -122,11 +106,6 @@ fun rememberPermissionFlow(vararg permissions: String, requireAll: Boolean = tru
     return flow
 }
 
-/**
- * La machine à états, côté écran : l'écran garde ses boutons au style de la PWA et appelle `gate { action }`.
- * Selon l'état : l'action, le dialogue système, l'explication d'abord (après un refus),
- * ou les réglages (après le refus définitif).
- */
 class PermissionGate internal constructor(private val run: (onGranted: () -> Unit) -> Unit) {
     operator fun invoke(onGranted: () -> Unit) = run(onGranted)
 }

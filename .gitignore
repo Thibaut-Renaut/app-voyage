@@ -9,7 +9,7 @@ local.properties
 .externalNativeBuild/
 .cxx/
 
-# Keystores : seul debug.keystore (clé debug du cours) est versionné
+# Keystores : seule la clé de développement partagée est versionnée
 *.jks
 *.keystore
 !debug.keystore
@@ -17,5 +17,5 @@ local.properties
 # Divers
 .DS_Store
 
-# APK de démonstration (mise à jour v1 → v2), construits localement
+# Fichiers de travail locaux
 demo/

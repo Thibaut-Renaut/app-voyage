@@ -35,23 +35,10 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /**
- * La fonctionnalité native : l'enregistreur de trajet GPS.
- *
- * Un « foreground service » de type location : l'app déclare à l'OS qu'elle fait un travail visible
- * par l'utilisateur (la notification permanente, avec un chronomètre et un bouton « Arrêter »).
- * En échange, l'OS la garde en vie et continue de lui livrer la position — écran éteint, app fermée
- * (balayée des récents), téléphone en Doze — sans permission de localisation « en arrière-plan » :
- * le service est démarré pendant que l'app est au premier plan, et la permission « pendant l'utilisation »
- * couvre tout ce qu'il fait ensuite.
- *
- * Une PWA ne peut pas : watchPosition() s'arrête dès que l'onglet passe en arrière-plan ou que l'écran
- * s'éteint, et aucun Service Worker n'a accès à la géolocalisation.
- *
- * Le service n'a pas d'écran : il écrit chaque point dans Room (via le repository) ; l'écran du trajet
- * observe la table et se dessine en direct. Le service et l'écran ne se parlent jamais directement.
+ * Enregistrement d'un trajet GPS en service de premier plan (type location) : la position continue
+ * d'être reçue écran éteint, application fermée ou en Doze, avec la seule permission « pendant l'utilisation ».
  */
 class TrackingService : Service() {
-
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val repository get() = JournalContainer.repository
     private val analytics get() = JournalContainer.analytics
@@ -62,11 +49,10 @@ class TrackingService : Service() {
     private var last: TrackPoint? = null
     private var distanceM = 0.0
     private var points = 0
-    private var starting = false      // le trajet est en train d'être créé en base
-    private var stopRequested = false // « Arrêter » reçu pendant ce temps
-    private var stopping = false      // un double appui sur « Arrêter » ne clôt pas le trajet deux fois
+    private var starting = false
+    private var stopRequested = false
+    private var stopping = false
 
-    /** Les points arrivent sur le main thread ; leur écriture est sérialisée (l'ordre et la distance restent justes). */
     private val writeLock = Mutex()
 
     private val callback = object : LocationCallback() {
@@ -82,26 +68,22 @@ class TrackingService : Service() {
             ACTION_START -> start(intent.getLongExtra(EXTRA_VOYAGE_ID, -1))
             ACTION_STOP -> stop()
         }
-        // NOT_STICKY : si l'OS tue le process, on ne relance pas un enregistrement « dans le dos » de l'utilisateur ;
-        // le trajet orphelin est clos au prochain démarrage (JournalApp → closeOrphanTrajets).
+        // Pas de redémarrage automatique : un trajet interrompu par le système est clos au lancement suivant.
         return START_NOT_STICKY
     }
 
     private fun start(voyageId: Long) {
         if (_active.value != null || starting || voyageId < 0) return
         startedAt = System.currentTimeMillis()
-        // 1. startForeground avant tout le reste : l'OS laisse 5 s après startForegroundService(), sinon il tue l'app.
         try {
+            // Doit être appelé dans les 5 s suivant startForegroundService().
             ServiceCompat.startForeground(this, NOTIFICATION_ID, notification(), foregroundType())
         } catch (e: Exception) {
-            // SecurityException : permission de localisation absente (Android 14+ la vérifie ici).
-            // ForegroundServiceStartNotAllowedException (Android 12+) : démarré depuis l'arrière-plan.
             Log.e(TAG, "Démarrage du suivi refusé par l'OS : ${e.javaClass.simpleName} — ${e.message}")
             analytics.trajetFailed(if (e is SecurityException) "permission_denied" else "fgs_not_allowed")
             stopSelf()
             return
         }
-        // 2. Le trajet en base, puis les mises à jour de position.
         starting = true
         scope.launch {
             val id = repository.startTrajet(voyageId)
@@ -114,10 +96,8 @@ class TrackingService : Service() {
         }
     }
 
-    @SuppressLint("MissingPermission") // vérifiée avant le démarrage (PermissionFlow), et par startForeground ci-dessus
+    @SuppressLint("MissingPermission")
     private fun requestUpdates() {
-        // Un relevé toutes les 5 s au plus, et seulement après 5 m de déplacement : le GPS ne réveille pas
-        // l'app pour rien quand on est arrêté (batterie).
         val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5_000)
             .setMinUpdateIntervalMillis(2_000)
             .setMinUpdateDistanceMeters(5f)
@@ -143,7 +123,6 @@ class TrackingService : Service() {
             writeLock.withLock { repository.addTrackPoint(id, point, distance) }
         }
         Log.d(TAG, "Point $points : ${point.lat}, ${point.lng} (± ${loc.accuracy} m) — ${TrackMath.formatDistance(distanceM)}")
-        // Le texte de la notification suit le trajet (le chronomètre, lui, tourne seul : setUsesChronometer).
         Notifications.post(this, NOTIFICATION_ID, notification())
     }
 
@@ -151,8 +130,8 @@ class TrackingService : Service() {
         if (stopping) return
         val id = trajetId
         if (id == null) {
-            if (starting) stopRequested = true // start() rappellera stop() dès que le trajet existera
-            else stopForegroundAndSelf()       // rien à arrêter (service créé par ce seul ACTION_STOP)
+            if (starting) stopRequested = true
+            else stopForegroundAndSelf()
             return
         }
         stopping = true
@@ -173,7 +152,6 @@ class TrackingService : Service() {
         stopSelf()
     }
 
-    /** L'OS détruit le service sans passer par stop() (rare) : le trajet est clos quand même, hors de notre scope. */
     override fun onDestroy() {
         client.removeLocationUpdates(callback)
         trajetId?.let { id -> JournalContainer.appScope.launch { repository.finishTrajet(id) } }
@@ -194,8 +172,8 @@ class TrackingService : Service() {
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(getString(R.string.tracking_notif_title))
             .setContentText(text)
-            .setOngoing(true) // l'utilisateur ne peut pas la balayer : elle est le contrat avec l'OS
-            .setOnlyAlertOnce(true) // mise à jour à chaque point, sans son ni vibration
+            .setOngoing(true)
+            .setOnlyAlertOnce(true)
             .setUsesChronometer(true)
             .setWhen(startedAt)
             .setCategory(NotificationCompat.CATEGORY_NAVIGATION)
@@ -219,10 +197,8 @@ class TrackingService : Service() {
 
         private val _active = MutableStateFlow<Long?>(null)
 
-        /** L'id du trajet en cours d'enregistrement dans ce process (null : aucun). Observé par les écrans. */
         val activeTrajetId: StateFlow<Long?> = _active.asStateFlow()
 
-        /** startForegroundService : la promesse faite à l'OS d'appeler startForeground() dans les 5 s. */
         fun start(context: Context, voyageId: Long) {
             ContextCompat.startForegroundService(
                 context,

@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Thème de l'app (après le splash) : sans ActionBar, Compose dessine tout. -->
     <style name="Theme.JournalVoyage.Main" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/jv_cream</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
 
-    <!-- Thème de lancement : l'écran de démarrage (core-splashscreen), puis Theme.JournalVoyage.Main. -->
     <style name="Theme.JournalVoyage" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/jv_cream</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>

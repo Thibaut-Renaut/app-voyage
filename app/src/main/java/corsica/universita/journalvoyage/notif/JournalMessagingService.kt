@@ -7,20 +7,9 @@ import corsica.universita.journalvoyage.JournalContainer
 import corsica.universita.journalvoyage.R
 import kotlinx.coroutines.launch
 
-/**
- * Réception des push FCM — l'équivalent du Push API + Service Worker de la PWA. Jamais lancé par l'app :
- * Play Services garde une connexion avec les serveurs de Google pour tout le téléphone, et réveille l'app
- * (même tuée) quand un message arrive.
- *
- * - Message « notification » (la console Firebase) + app en arrière-plan : la bibliothèque Firebase l'affiche
- *   seule (canal « messages », manifest) ; onMessageReceived n'est pas appelé. Au clic, les « données
- *   personnalisées » (etapeId…) arrivent en extras String de MainActivity.
- * - App au premier plan, ou message « data » : livré ici ; l'app construit la notification.
- */
 class JournalMessagingService : FirebaseMessagingService() {
-
-    /** Marqué « deprecated » dans firebase-messaging 25.x sans remplaçant : toujours le rappel du nouveau jeton. */
     @Suppress("OVERRIDE_DEPRECATION")
+    // Déprécié sans remplaçant dans firebase-messaging 25.x.
     override fun onNewToken(token: String) {
         Log.d(TAG, "Nouveau jeton FCM : $token")
         JournalContainer.appScope.launch { JournalContainer.settings.saveFcmToken(token) }

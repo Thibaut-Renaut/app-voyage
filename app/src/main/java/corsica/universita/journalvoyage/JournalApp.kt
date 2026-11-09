@@ -21,10 +21,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
-/**
- * Pas de Hilt : un conteneur à la main. Une seule instance de chaque objet par process, construite
- * avant tout écran, et partagée par les écrans, le SyncWorker et le service FCM.
- */
+/** Injection de dépendances manuelle : une instance par process, partagée par l'UI, le worker et les services. */
 object JournalContainer {
     lateinit var database: JournalDatabase
         private set
@@ -41,10 +38,8 @@ object JournalContainer {
     lateinit var gpxExporter: GpxExporter
         private set
 
-    /** Un texte ou une photo reçus d'une autre app, en attente d'être versés dans le formulaire d'étape. */
     val pendingShare = MutableStateFlow<SharedContent?>(null)
 
-    /** Un scope qui vit avec le process, pour le travail lancé hors d'un écran (jeton FCM, données de démo). */
     val appScope = CoroutineScope(SupervisorJob())
 
     fun init(context: Context) {
@@ -60,7 +55,6 @@ object JournalContainer {
 
 data class SharedContent(val text: String?, val imageUri: String?)
 
-/** Un objet Application par process : créé avant toute Activity, tout worker, tout service. */
 class JournalApp : Application() {
     override fun onCreate() {
         super.onCreate()
@@ -68,21 +62,16 @@ class JournalApp : Application() {
         Notifications.createChannels(this)
         JournalContainer.appScope.launch {
             JournalContainer.repository.seedIfEmpty()
-            // Un trajet resté « en cours » d'un process tué par l'OS : clos à l'heure de son dernier point.
+            // Un trajet resté ouvert après la mort du process est clos à l'heure de son dernier point.
             val closed = JournalContainer.repository.closeOrphanTrajets(exceptId = TrackingService.activeTrajetId.value)
             if (closed > 0) Log.w("Journal", "$closed trajet(s) interrompu(s) par la mort du process, clos")
-            // Une étape restée « en attente » (worker abandonné après 5 essais) repart à chaque démarrage.
             JournalContainer.repository.enqueueSync()
         }
         fetchFcmToken()
     }
 
-    /**
-     * Le jeton courant (onNewToken n'est appelé qu'à sa création ou à son renouvellement).
-     * getToken() est marqué « deprecated » dans firebase-messaging 25.x, sans API de remplacement :
-     * c'est toujours le moyen documenté d'obtenir le jeton, d'où la suppression ciblée de l'avertissement.
-     */
     @Suppress("DEPRECATION")
+    // getToken() est déprécié sans remplaçant dans firebase-messaging 25.x.
     private fun fetchFcmToken() {
         FirebaseMessaging.getInstance().token
             .addOnSuccessListener { token ->

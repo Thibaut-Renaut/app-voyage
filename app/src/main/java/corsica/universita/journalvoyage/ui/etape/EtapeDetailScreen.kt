@@ -58,10 +58,6 @@ import kotlinx.coroutines.launch
 class EtapeDetailViewModel(private val etapeId: Long) : ViewModel() {
     private val repository = JournalContainer.repository
 
-    /**
-     * Lue dans Room et observée : le badge passe à « Synchronisé » sous les yeux quand le worker a fini.
-     * null = pas encore lue ; Loaded(null) = l'étape n'existe pas (supprimée, ou id d'un push périmé).
-     */
     val etape: StateFlow<Loaded?> = repository.observeEtape(etapeId).map { Loaded(it) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -75,7 +71,6 @@ class EtapeDetailViewModel(private val etapeId: Long) : ViewModel() {
     }
 }
 
-/** Le détail d'une étape : ses photos, son récit, sa position (ouverte dans l'app de cartes), le partage. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EtapeDetailScreen(etapeId: Long, onBack: () -> Unit) {

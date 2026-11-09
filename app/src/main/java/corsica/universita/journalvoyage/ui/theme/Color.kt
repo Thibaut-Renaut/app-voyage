@@ -2,7 +2,6 @@ package corsica.universita.journalvoyage.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Les variables CSS de la PWA (style.css, :root), reprises une à une.
 val Green50 = Color(0xFFF4F7F2)
 val Green100 = Color(0xFFE8EFE5)
 val Green200 = Color(0xFFD1DFCC)
@@ -15,14 +14,13 @@ val Green800 = Color(0xFF2D3E28)
 val Green900 = Color(0xFF1B2618)
 val Cream50 = Color(0xFFFAFAF7)
 val Cream100 = Color(0xFFF5F4EF)
-val Gray200 = Color(0xFFE3E2DC) // --border
+val Gray200 = Color(0xFFE3E2DC)
 val Gray300 = Color(0xFFCAC9C0)
-val Gray400 = Color(0xFF9E9D94) // --text-muted
-val Gray500 = Color(0xFF717068) // --text-secondary
+val Gray400 = Color(0xFF9E9D94)
+val Gray500 = Color(0xFF717068)
 val Gray700 = Color(0xFF383732)
-val Gray900 = Color(0xFF1C1B18) // --text-primary
+val Gray900 = Color(0xFF1C1B18)
 
-// « En attente de sync » (journal-entry__status--pending) et la pastille hors ligne
 val AmberBg = Color(0xFFFEF3C7)
 val AmberText = Color(0xFF92400E)
 val AmberBorder = Color(0xFFFCD34D)

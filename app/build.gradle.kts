@@ -9,10 +9,8 @@ plugins {
     alias(libs.plugins.google.services)
 }
 
-// Valeurs propres à la machine, lues dans local.properties (jamais commité) :
-//   PWA_HOST=journalvoyage.netlify.app   → l'hôte de la PWA (App Link, bouton « Ouvrir la PWA »)
-//   SYNC_BASE_URL=https://httpbin.org/   → la cible de l'outbox (le même endpoint que la PWA)
-//   RELEASE_STORE_FILE / _PASSWORD / RELEASE_KEY_ALIAS / _PASSWORD → la clé release (facultatif)
+// Surcharges facultatives dans local.properties : PWA_HOST, SYNC_BASE_URL, RELEASE_STORE_FILE,
+// RELEASE_STORE_PASSWORD, RELEASE_KEY_ALIAS, RELEASE_KEY_PASSWORD.
 val localProps = Properties().apply {
     val f = rootProject.file("local.properties")
     if (f.exists()) f.inputStream().use { load(it) }
@@ -30,7 +28,6 @@ android {
         applicationId = "corsica.universita.journalvoyage"
         minSdk = 26
         targetSdk = 37
-        // +1 à chaque livraison : Android refuse d'installer un versionCode inférieur par-dessus.
         versionCode = 3
         versionName = "2.1"
 
@@ -42,14 +39,14 @@ android {
     }
 
     signingConfigs {
-        // Keystore debug du cours : une seule empreinte SHA-256 à déclarer (assetlinks.json, Firebase).
+        // Clé debug partagée : son empreinte est déclarée dans assetlinks.json.
         getByName("debug") {
             storeFile = rootProject.file("debug.keystore")
             storePassword = "android"
             keyAlias = "androiddebugkey"
             keyPassword = "android"
         }
-        // Bonus Jour 6 : la clé release vient de local.properties ; sans clé, la release est signée debug.
+        // Sans clé release configurée, la version release est signée avec la clé debug.
         create("release") {
             if (prop("RELEASE_STORE_FILE", "").isNotEmpty()) {
                 storeFile = rootProject.file(prop("RELEASE_STORE_FILE", ""))
@@ -81,8 +78,6 @@ android {
     }
 }
 
-// Le schéma de chaque version de la base est exporté ici (1.json, 2.json…) et commité :
-// c'est la référence des migrations et du test MigrationTest.
 room { schemaDirectory("$projectDir/schemas") }
 
 dependencies {
@@ -119,7 +114,7 @@ dependencies {
     implementation(libs.okhttp.logging)
     implementation(libs.serialization.json)
 
-    // Firebase : push (FCM) et mesure (Analytics), un seul projet Firebase
+    // Firebase : FCM et Analytics
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.analytics)

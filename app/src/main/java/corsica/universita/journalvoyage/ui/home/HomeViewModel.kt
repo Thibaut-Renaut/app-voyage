@@ -33,10 +33,8 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/** Les fenêtres (modales) de la PWA : créer, modifier, supprimer, changer de carnet. */
 enum class VoyageDialog { None, Create, Edit, Delete, Switch }
 
-/** Le message d'état sous « Ma position » (#geo-status de la PWA). */
 sealed interface GeoStatus {
     data object Idle : GeoStatus
     data object Searching : GeoStatus
@@ -44,7 +42,6 @@ sealed interface GeoStatus {
     data object Unavailable : GeoStatus
 }
 
-/** Un toast : un texte de res/values/strings.xml et ses arguments (le ViewModel ne connaît pas le Context). */
 data class Toast(@StringRes val text: Int, val args: List<Any> = emptyList())
 
 data class EtapeForm(
@@ -64,13 +61,6 @@ data class HomeState(
     val pending: Int = 0,
 )
 
-/**
- * La page d'accueil — la PWA tient sur une seule page, l'app aussi : le formulaire « Nouvelle étape de … »,
- * l'itinéraire du carnet actif, la collection de carnets. Ce ViewModel en porte tout l'état :
- * - ce qui vient de Room et de DataStore (carnets, étapes, carnet actif, badge) : observé, jamais copié ;
- * - les brouillons (étape, carnet en cours d'édition, fenêtre ouverte) : dans le SavedStateHandle,
- *   ils survivent à la rotation et à la mort du process.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModel(private val saved: SavedStateHandle) : ViewModel() {
     private val repository = JournalContainer.repository
@@ -78,12 +68,7 @@ class HomeViewModel(private val saved: SavedStateHandle) : ViewModel() {
     private val photoStore = JournalContainer.photoStore
     private val locationSource = JournalContainer.locationSource
 
-    // ---- Les données ----
-
-    /**
-     * Le carnet actif : celui gardé dans DataStore (le localStorage « pwa-active-voyage-id » de la PWA)
-     * s'il existe encore, sinon le premier carnet — exactement la règle de initVoyages().
-     */
+    // Carnet actif : celui enregistré s'il existe encore, sinon le premier (même règle que la PWA).
     private val activeId: StateFlow<Long?> = combine(repository.voyages, settings.activeVoyageId) { list, savedId ->
         list.firstOrNull { it.id == savedId }?.id ?: list.firstOrNull()?.id
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
@@ -99,18 +84,13 @@ class HomeViewModel(private val saved: SavedStateHandle) : ViewModel() {
     val consent: StateFlow<Boolean?> = settings.analyticsConsent.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
     val fcmToken: StateFlow<String?> = settings.fcmToken.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    /** RGPD : le choix de l'utilisateur, gardé dans DataStore ; Analytics l'observe et coupe ou rouvre la collecte. */
     fun setConsent(value: Boolean) {
         viewModelScope.launch { settings.setAnalyticsConsent(value) }
     }
 
-    // ---- Les toasts (showToast de la PWA) ----
-
     private val _toasts = Channel<Toast>(Channel.BUFFERED)
     val toasts: Flow<Toast> = _toasts.receiveAsFlow()
     private fun toast(@StringRes text: Int, vararg args: Any) = _toasts.trySend(Toast(text, args.toList()))
-
-    // ---- Le formulaire « Nouvelle étape » ----
 
     val etapeForm: StateFlow<EtapeForm> = combine(
         saved.getStateFlow(E_TITRE, ""),
@@ -157,7 +137,6 @@ class HomeViewModel(private val saved: SavedStateHandle) : ViewModel() {
         JournalContainer.appScope.launch { photoStore.delete(listOf(path)) }
     }
 
-    /** Le submit de #form-etape : Room d'abord, l'envoi confié à WorkManager, le formulaire remis à zéro. */
     fun saveEtape(online: Boolean) {
         val f = etapeForm.value
         val voyageId = activeId.value ?: return
@@ -179,8 +158,6 @@ class HomeViewModel(private val saved: SavedStateHandle) : ViewModel() {
         }
     }
 
-    // ---- Les carnets ----
-
     fun openVoyage(id: Long) {
         viewModelScope.launch {
             settings.setActiveVoyage(id)
@@ -192,7 +169,6 @@ class HomeViewModel(private val saved: SavedStateHandle) : ViewModel() {
         .map { VoyageDialog.valueOf(it) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, VoyageDialog.None)
 
-    /** Le carnet visé par la fenêtre ouverte (édition ou suppression). */
     val dialogVoyageId: StateFlow<Long?> = saved.getStateFlow<Long?>(D_VOYAGE, null)
 
     val voyageForm: StateFlow<VoyageForm> = combine(
@@ -222,7 +198,6 @@ class HomeViewModel(private val saved: SavedStateHandle) : ViewModel() {
 
     fun openSwitch() = show(VoyageDialog.Switch)
 
-    /** promptDeleteVoyage() : la PWA refuse de supprimer le dernier carnet. */
     fun askDelete(id: Long) {
         viewModelScope.launch {
             if (repository.voyageCount() <= 1) {
@@ -262,8 +237,8 @@ class HomeViewModel(private val saved: SavedStateHandle) : ViewModel() {
         if (f.titre.isBlank() || f.description.isBlank()) return
         viewModelScope.launch {
             val id = repository.saveVoyage(0, f.titre.trim(), f.description.trim(), f.coverPath)
-            settings.setActiveVoyage(id) // le nouveau carnet devient le carnet actif (setActiveVoyage de la PWA)
-            saved[V_COVER] = null // enregistrée : ce n'est plus un brouillon à effacer
+            settings.setActiveVoyage(id)
+            saved[V_COVER] = null
             show(VoyageDialog.None)
             toast(R.string.toast_voyage_created, f.titre.trim())
         }
@@ -274,7 +249,7 @@ class HomeViewModel(private val saved: SavedStateHandle) : ViewModel() {
         val id = dialogVoyageId.value ?: return
         if (f.titre.isBlank() || f.description.isBlank()) return
         viewModelScope.launch {
-            repository.saveVoyage(id, f.titre.trim(), f.description.trim(), f.coverPath) // efface l'ancienne photo remplacée
+            repository.saveVoyage(id, f.titre.trim(), f.description.trim(), f.coverPath)
             saved[V_COVER] = null
             show(VoyageDialog.None)
             toast(R.string.toast_voyage_updated, f.titre.trim())
@@ -286,16 +261,12 @@ class HomeViewModel(private val saved: SavedStateHandle) : ViewModel() {
         viewModelScope.launch {
             val titre = repository.getVoyage(id)?.titre.orEmpty()
             show(VoyageDialog.None)
-            repository.deleteVoyage(id) // CASCADE : étapes, photos, trajets ; les fichiers aussi
-            // Le carnet actif supprimé : activeId retombe tout seul sur le premier carnet restant.
+            repository.deleteVoyage(id)
             toast(R.string.toast_voyage_deleted, titre)
         }
     }
 
-    /**
-     * Vider un brouillon = remettre les valeurs par défaut, jamais saved.remove() : remove() détache le
-     * StateFlow rendu par getStateFlow(), et les saisies suivantes ne seraient plus émises (le champ resterait vide).
-     */
+    // Ne jamais vider un brouillon avec SavedStateHandle.remove() : le StateFlow de getStateFlow() serait détaché.
     private fun resetVoyageForm() {
         discardDraftCover()
         saved[V_TITRE] = ""
@@ -312,7 +283,6 @@ class HomeViewModel(private val saved: SavedStateHandle) : ViewModel() {
         saved[E_PHOTOS] = arrayListOf<String>()
     }
 
-    /** Une photo vitrine choisie puis abandonnée (Annuler, remplacée) ne reste pas sur le disque ; l'originale, si. */
     private fun discardDraftCover() {
         val current = saved.get<String?>(V_COVER) ?: return
         if (current != saved.get<String?>(V_ORIGINAL)) {
@@ -320,8 +290,6 @@ class HomeViewModel(private val saved: SavedStateHandle) : ViewModel() {
         }
         saved[V_COVER] = null
     }
-
-    // ---- Le partage reçu d'une autre app : il préremplit le formulaire (comme une nouvelle étape) ----
 
     init {
         viewModelScope.launch {
@@ -337,7 +305,6 @@ class HomeViewModel(private val saved: SavedStateHandle) : ViewModel() {
         }
     }
 
-    /** L'app est fermée (retour depuis l'accueil) : les photos et la photo vitrine des brouillons ne restent pas orphelines. */
     override fun onCleared() {
         val photos = etapeForm.value.photos
         if (photos.isNotEmpty()) JournalContainer.appScope.launch { photoStore.delete(photos) }

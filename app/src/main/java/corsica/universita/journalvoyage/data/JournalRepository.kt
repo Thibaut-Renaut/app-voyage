@@ -24,14 +24,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.util.concurrent.TimeUnit
 
-/**
- * La source de vérité : le seul endroit qui décide d'où viennent les données et où elles vont.
- * Les écrans, le SyncWorker et le service FCM passent tous par lui ; les ViewModels ne connaissent ni Room ni HTTP.
- *
- * Offline first, comme la PWA : une étape est d'abord écrite dans Room (instantané, hors ligne compris),
- * puis l'envoi est confié à WorkManager, qui le fera quand l'OS le permettra, app fermée ou tuée.
- * La PWA tentait d'abord un fetch direct, puis l'outbox en cas d'échec ; ici, il n'y a qu'un chemin.
- */
+/** Source de vérité unique : écritures dans Room d'abord, envoi au serveur confié à WorkManager. */
 class JournalRepository(
     private val db: JournalDatabase,
     private val api: SyncApi,
@@ -41,15 +34,12 @@ class JournalRepository(
     private val voyageDao = db.voyageDao()
     private val etapeDao = db.etapeDao()
 
-    // ---- Voyages ----
-
     val voyages: Flow<List<Voyage>> = voyageDao.all().map { list ->
         list.map { Voyage(it.voyage.id, it.voyage.titre, it.voyage.description, it.voyage.coverPath, it.voyage.createdAt, it.etapesCount) }
     }
 
     suspend fun getVoyage(id: Long): Voyage? = voyageDao.get(id)?.toVoyage()
 
-    /** id = 0 : nouveau voyage ; sinon mise à jour. L'ancienne photo vitrine remplacée est effacée du disque. */
     suspend fun saveVoyage(id: Long, titre: String, description: String, coverPath: String?): Long {
         val old = if (id != 0L) voyageDao.get(id) else null
         val saved = voyageDao.upsert(
@@ -59,11 +49,10 @@ class JournalRepository(
             ),
         )
         if (old?.coverPath != null && old.coverPath != coverPath) photoStore.delete(listOf(old.coverPath))
-        // @Upsert rend -1 quand la ligne existait déjà (UPDATE) : l'id est alors celui qu'on a passé.
+        // @Upsert renvoie -1 quand la ligne existait déjà.
         return if (id != 0L) id else saved
     }
 
-    /** CASCADE efface les lignes des étapes et des photos ; les fichiers, c'est à nous. */
     suspend fun deleteVoyage(id: Long) {
         val voyage = voyageDao.get(id) ?: return
         val files = etapeDao.photoPathsOfVoyage(id) + listOfNotNull(voyage.coverPath)
@@ -71,13 +60,10 @@ class JournalRepository(
         photoStore.delete(files)
     }
 
-    // ---- Étapes ----
-
     fun etapes(voyageId: Long): Flow<List<Etape>> = etapeDao.forVoyage(voyageId).map { list -> list.map { it.toEtape() } }
 
     fun observeEtape(id: Long): Flow<Etape?> = etapeDao.observe(id).map { it?.toEtape() }
 
-    /** L'étape et ses photos dans une transaction : jamais une étape sans ses photos, même si l'app meurt entre les deux. */
     suspend fun addEtape(voyageId: Long, titre: String, description: String, lat: Double?, lng: Double?, photos: List<String>): Long {
         val id = db.withTransaction {
             val id = etapeDao.upsert(
@@ -97,8 +83,6 @@ class JournalRepository(
         photoStore.delete(files)
     }
 
-    // ---- v2 : les trajets (écrits par TrackingService, lus par les écrans) ----
-
     private val trajetDao = db.trajetDao()
 
     fun trajets(voyageId: Long): Flow<List<Trajet>> = trajetDao.forVoyage(voyageId).map { list -> list.map { it.toTrajet() } }
@@ -110,7 +94,6 @@ class JournalRepository(
     suspend fun startTrajet(voyageId: Long): Long =
         trajetDao.insert(TrajetEntity(voyageId = voyageId, startedAt = System.currentTimeMillis()))
 
-    /** Le point et la nouvelle distance ensemble : jamais un point compté sans être en base, ou l'inverse. */
     suspend fun addTrackPoint(trajetId: Long, p: TrackPoint, distanceM: Double) = db.withTransaction {
         trajetDao.insertPoint(TrackPointEntity(trajetId = trajetId, lat = p.lat, lng = p.lng, altitude = p.altitude, accuracy = p.accuracy, time = p.time))
         trajetDao.setDistance(trajetId, distanceM)
@@ -118,7 +101,6 @@ class JournalRepository(
 
     suspend fun finishTrajet(id: Long) = trajetDao.finish(id, System.currentTimeMillis())
 
-    /** Nommer (ou renommer) un trajet ; un nom vide efface le nom (l'écran affiche alors la date). */
     suspend fun renameTrajet(id: Long, nom: String) = trajetDao.rename(id, nom.trim().ifEmpty { null })
 
     suspend fun closeOrphanTrajets(exceptId: Long?): Int = trajetDao.closeOrphans(exceptId ?: -1)
@@ -129,13 +111,6 @@ class JournalRepository(
 
     suspend fun trackPointsOnce(trajetId: Long): List<TrackPoint> = trajetDao.pointsOnce(trajetId).map { it.toPoint() }
 
-    // ---- Premier lancement : les mêmes données de démonstration que la PWA ----
-
-    /**
-     * initVoyages() + hydrateDestinations() de la PWA, à l'identique : le carnet « Échappée en Corse »
-     * (photo vitrine Bavella) et les trois étapes de l'itinéraire de démonstration, sans photo ni position,
-     * déjà « Synchronisées ». Dans l'ordre de la PWA : Bavella (1), Piana (2), Palombaggia (3).
-     */
     suspend fun seedIfEmpty() {
         if (voyageDao.count() > 0) return
         Log.d(TAG, "Premier lancement : voyage de démonstration")
@@ -150,7 +125,6 @@ class JournalRepository(
                 ),
             )
             Destinations.all.forEachIndexed { i, d ->
-                // Tri par date décroissante : la première de la liste doit être la plus récente.
                 etapeDao.upsert(EtapeEntity(voyageId = voyageId, titre = d.etapeTitre, description = d.description, date = now - i, synced = true))
             }
         }
@@ -158,25 +132,16 @@ class JournalRepository(
 
     suspend fun voyageCount(): Int = voyageDao.count()
 
-    // ---- L'outbox ----
-
-    /** Le badge « n en attente ». */
     val pendingCount: Flow<Int> = etapeDao.unsyncedCount()
 
-    /** La demande à l'OS : « lance SyncWorker, une fois, dès qu'il y a du réseau ». L'OS choisit le moment. */
     fun enqueueSync() {
         val request = OneTimeWorkRequestBuilder<SyncWorker>()
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
-            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS) // 30 s, 1 min, 2 min…
+            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
             .build()
-        // Un seul travail « sync » : dix étapes hors ligne = une demande. KEEP garde celle qui attend déjà.
         workManager.enqueueUniqueWork("sync", ExistingWorkPolicy.KEEP, request)
     }
 
-    /**
-     * Appelé par SyncWorker : POST de chaque étape synced = 0, puis synced = 1.
-     * Une IOException (réseau) ou une HttpException (serveur) remonte au worker, qui décide.
-     */
     suspend fun syncPending(): Int {
         val sent = mutableListOf<Long>()
         try {
@@ -187,7 +152,7 @@ class JournalRepository(
                 sent += dto.id
             }
         } finally {
-            // Si un envoi échoue en cours de route, celles déjà parties sont marquées : sinon, renvoyées en double.
+            // Les étapes déjà envoyées sont marquées même si une suivante échoue : pas de doublon au prochain essai.
             if (sent.isNotEmpty()) etapeDao.markSynced(sent)
         }
         return sent.size

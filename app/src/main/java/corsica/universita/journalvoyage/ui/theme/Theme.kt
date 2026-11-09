@@ -8,7 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
-// --radius-sm / md / lg de la PWA
 val RadiusSm = RoundedCornerShape(8.dp)
 val RadiusMd = RoundedCornerShape(14.dp)
 val RadiusLg = RoundedCornerShape(20.dp)
@@ -38,10 +37,6 @@ private val Colors = lightColorScheme(
     surfaceContainerHighest = Color.White,
 )
 
-/**
- * Le thème de la PWA : ses couleurs, ses rayons, ses polices. Clair seulement, comme la PWA
- * (qui n'a pas de mode sombre) : même rendu sur le téléphone que dans le navigateur.
- */
 @Composable
 fun JournalTheme(content: @Composable () -> Unit) {
     MaterialTheme(

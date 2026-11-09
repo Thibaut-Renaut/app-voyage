@@ -3,7 +3,6 @@ package corsica.universita.journalvoyage.data
 import java.text.DateFormat
 import java.util.Date
 
-/** Un voyage tel que l'écran le voit (≠ VoyageEntity, la ligne en base : le repository convertit). */
 data class Voyage(
     val id: Long,
     val titre: String,
@@ -13,7 +12,6 @@ data class Voyage(
     val etapesCount: Int = 0,
 )
 
-/** Une étape et ses photos (des chemins de fichiers dans filesDir/photos/). */
 data class Etape(
     val id: Long,
     val voyageId: Long,
@@ -26,11 +24,9 @@ data class Etape(
     val photos: List<String>,
 )
 
-/** Date et heure lisibles, au format de la langue du téléphone. */
 fun Long.toDateTime(): String =
     DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date(this))
 
-/** v2 : un trajet enregistré. endedAt == null : en cours. */
 data class Trajet(
     val id: Long,
     val voyageId: Long,

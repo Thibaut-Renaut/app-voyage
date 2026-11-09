@@ -13,32 +13,23 @@ import corsica.universita.journalvoyage.ui.home.HomeScreen
 import corsica.universita.journalvoyage.ui.trajet.TrajetScreen
 import kotlinx.serialization.Serializable
 
-// Les écrans. La PWA tient sur une page (Home) ; l'app y ajoute deux écrans natifs :
-// le détail d'une étape (partage, carte) et un trajet GPS. Clés sérialisables : le backstack
-// est sauvegardé à la rotation ET à la mort du process (rememberNavBackStack).
 @Serializable data object Home : NavKey
 @Serializable data class EtapeDetail(val id: Long) : NavKey
 @Serializable data class TrajetDetail(val id: Long) : NavKey
 
-/**
- * Navigation 3 : naviguer = ajouter une clé ; revenir = retirer la dernière.
- * Les deux décorateurs donnent à chaque entrée son état sauvegardé et ses ViewModels.
- */
 @Composable
 fun JournalNavigation(appViewModel: AppViewModel) {
     val backStack = rememberNavBackStack(Home)
 
-    /** Retirer cette clé, seulement si elle est au sommet (un double-tap sur Retour ne vide pas la pile). */
+    // Ne retire que l'écran courant : un second appui sur Retour pendant l'animation ne vide pas la pile.
     fun pop(key: NavKey) {
         if (backStack.size > 1 && backStack.last() == key) backStack.removeAt(backStack.lastIndex)
     }
 
-    /** Et à l'aller : un double-tap n'empile pas deux fois le même écran. */
     fun push(key: NavKey) {
         if (backStack.lastOrNull() != key) backStack.add(key)
     }
 
-    // Les intents reçus par l'Activity (notification, partage, App Link) deviennent des navigations.
     LaunchedEffect(Unit) {
         appViewModel.navigation.collect { key ->
             if (key == Home) {

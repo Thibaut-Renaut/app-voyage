@@ -65,12 +65,6 @@ class TrajetsViewModel(voyageId: Long) : ViewModel() {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 }
 
-/**
- * La section « Trajets GPS » de l'écran d'un voyage : démarrer un enregistrement, voir les trajets passés.
- * Avant de démarrer, trois vérifications, chacune avec une issue pour l'utilisateur :
- * la permission (PermissionFlow, jusqu'au refus définitif), la localisation du téléphone (réglages),
- * les notifications (prévenir : le suivi marche, mais sans sa notification visible).
- */
 @Composable
 fun TrajetsSection(voyageId: Long, onOpen: (Long) -> Unit) {
     val viewModel: TrajetsViewModel = viewModel(key = "trajets-$voyageId", factory = viewModelFactory { initializer { TrajetsViewModel(voyageId) } })
@@ -85,7 +79,6 @@ fun TrajetsSection(voyageId: Long, onOpen: (Long) -> Unit) {
         location, stringResource(R.string.trajet_start), stringResource(R.string.trajet_location_rationale),
         onDenied = { JournalContainer.analytics.trajetFailed("permission_denied") },
     )
-    // Relus à chaque retour dans l'app (l'utilisateur a pu les changer dans les réglages).
     var locationOn by remember { mutableStateOf(true) }
     var notificationsOn by remember { mutableStateOf(true) }
     var precise by remember { mutableStateOf(true) }
@@ -96,7 +89,6 @@ fun TrajetsSection(voyageId: Long, onOpen: (Long) -> Unit) {
         onPauseOrDispose { }
     }
 
-    // Après « Démarrer », on ouvre l'écran du trajet dès que le service l'a créé en base.
     var openWhenStarted by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(active, openWhenStarted) {
         val id = active
@@ -159,7 +151,6 @@ private fun TrajetRow(t: Trajet, live: Boolean, onClick: () -> Unit) {
                 tint = if (live) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
             )
             Column(Modifier.weight(1f)) {
-                // Le nom donné par l'utilisateur, sinon la date ; la date reste visible en dessous.
                 Text(t.nom ?: stringResource(R.string.trajet_title, t.startedAt.toDateTime()), style = MaterialTheme.typography.titleSmall)
                 if (t.nom != null) Text(t.startedAt.toDateTime(), style = MaterialTheme.typography.bodySmall)
                 val duration = (t.endedAt ?: System.currentTimeMillis()) - t.startedAt

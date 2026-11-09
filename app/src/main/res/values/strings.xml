@@ -75,7 +75,7 @@
     <string name="consent_menu_on">Mesure d’audience : activée (désactiver)</string>
     <string name="consent_menu_off">Mesure d’audience : désactivée (activer)</string>
 
-    <!-- v2 : l'enregistreur de trajet (la fonctionnalité native) -->
+    <!-- Trajets GPS -->
     <string name="trajets">Trajets GPS</string>
     <string name="trajets_intro">Enregistrez votre itinéraire : le tracé continue écran éteint, app fermée — ce que la PWA ne pouvait pas faire.</string>
     <string name="trajet_start">Enregistrer un trajet</string>
@@ -110,7 +110,7 @@
     <string name="channel_tracking_name">Trajet en cours</string>
     <string name="channel_tracking_desc">La notification permanente de l’enregistrement d’un trajet GPS</string>
 
-    <!-- La page d'accueil : les textes de la PWA (index.html), mot pour mot -->
+    <!-- Page d'accueil (textes de la PWA) -->
     <string name="header_badge">Carnet d’aventures</string>
     <string name="header_title_1">Votre Journal,</string>
     <string name="header_title_2">de Voyage.</string>
@@ -151,7 +151,7 @@ Ajoutez votre première aventure ci-dessus !</string>
     <string name="destinations_title">Destinations inspirantes</string>
     <string name="footer_meta">Application Android · M2 Informatique · Università di Corsica · 2026</string>
 
-    <!-- Les modales de la PWA -->
+    <!-- Fenêtres des carnets -->
     <string name="modal_create_badge">Nouveau carnet</string>
     <string name="modal_create_title">Créer un voyage</string>
     <string name="modal_create_subtitle">Donnez un titre, une description et une photo vitrine à votre carnet d’aventures.</string>
@@ -179,7 +179,7 @@ Ajoutez votre première aventure ci-dessus !</string>
     <string name="modal_switch_subtitle">Choisissez le voyage sur lequel vous souhaitez enregistrer vos étapes.</string>
     <string name="switch_create_new">Créer un nouveau voyage</string>
 
-    <!-- Les toasts et l'indicateur réseau de la PWA -->
+    <!-- Toasts et indicateur réseau -->
     <string name="toast_active_voyage">Carnet actif : %s</string>
     <string name="toast_voyage_created">Nouveau carnet « %s » créé !</string>
     <string name="toast_voyage_updated">Carnet « %s » mis à jour !</string>
@@ -192,7 +192,7 @@ Ajoutez votre première aventure ci-dessus !</string>
     <string name="network_offline">Mode hors ligne — actions synchronisées au retour</string>
     <string name="network_online">Connexion rétablie</string>
 
-    <!-- v3 (2.1) : nommer un trajet, enregistrer son GPX -->
+    <!-- Nom et export d'un trajet -->
     <string name="trajet_rename">Nommer le trajet</string>
     <string name="trajet_rename_subtitle">Par exemple le trajet entre deux étapes du voyage : choisissez-les, ou écrivez librement.</string>
     <string name="trajet_from">Depuis l’étape</string>
