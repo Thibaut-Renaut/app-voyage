@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "000000000000",
-    "project_id": "cours-pwa-b0358",
-    "storage_bucket": "cours-pwa-b0358.appspot.com"
+    "project_number": "1044616470781",
+    "project_id": "journal-voyage-f4981",
+    "storage_bucket": "journal-voyage-f4981.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:000000000000:android:00000000000000000000ab",
+        "mobilesdk_app_id": "1:1044616470781:android:d01a53af134f9111289e94",
         "android_client_info": {
           "package_name": "corsica.universita.journalvoyage"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSy-A-REMPLACER-PAR-LA-CLE-DU-PROJET-00"
+          "current_key": "AIzaSyCAQ6xLXX1IgiTfjLSsPUSa7TXRxh_4pc4"
         }
       ],
       "services": {

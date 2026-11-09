@@ -34,11 +34,10 @@ Ou dans Android Studio : *Open* → ce dossier → ▶ *Run 'app'*.
 
 ### Firebase (push et analytics)
 
-`app/google-services.json` est un **fichier factice** (copié du projet de départ du cours, adapté au package) : l'app se construit et fonctionne, mais sans jeton FCM ni envoi des événements Analytics. Pour les activer :
+`app/google-services.json` est celui du projet Firebase **`journal-voyage-f4981`** (application Android `corsica.universita.journalvoyage`, Google Analytics activé). Ce n'est pas un secret : la clé identifie le projet, elle ne donne pas accès aux données.
 
-1. Console Firebase → le projet → *Ajouter une application* Android, package **`corsica.universita.journalvoyage`**.
-2. Télécharger `google-services.json`, le mettre dans `app/` (à la place du factice), reconstruire.
-3. Google Analytics doit être activé sur le projet.
+- Voir les événements en direct : `adb shell setprop debug.firebase.analytics.app corsica.universita.journalvoyage`, relancer l'app, puis console Firebase › Analytics › **DebugView**.
+- Tester un push : menu ⋮ › *Copier mon jeton FCM*, puis console Firebase › Messaging › *Nouvelle campagne* › *Envoyer un message de test* ; donnée personnalisée `etapeId` pour ouvrir une étape.
 
 ## Les versions
 
