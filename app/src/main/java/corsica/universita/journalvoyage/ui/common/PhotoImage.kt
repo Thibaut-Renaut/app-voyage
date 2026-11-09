@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -72,7 +73,7 @@ private fun decode(path: String, maxPx: Int): Bitmap? {
 /** Une image des assets (les photos des « Destinations inspirantes », comme le dossier images de la PWA), décodée hors du main thread. */
 @Composable
 fun AssetImage(name: String, contentDescription: String?, modifier: Modifier = Modifier, maxPx: Int = 1080) {
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
     val key = "asset:$name@$maxPx"
     val bitmap by produceState(initialValue = cache.get(key), key) {
         if (value == null) {

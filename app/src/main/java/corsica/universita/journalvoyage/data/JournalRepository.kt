@@ -47,11 +47,7 @@ class JournalRepository(
         list.map { Voyage(it.voyage.id, it.voyage.titre, it.voyage.description, it.voyage.coverPath, it.voyage.createdAt, it.etapesCount) }
     }
 
-    fun observeVoyage(id: Long): Flow<Voyage?> = voyageDao.observe(id).map { it?.toVoyage() }
-
     suspend fun getVoyage(id: Long): Voyage? = voyageDao.get(id)?.toVoyage()
-
-    suspend fun firstVoyageId(): Long? = voyageDao.firstId()
 
     /** id = 0 : nouveau voyage ; sinon mise à jour. L'ancienne photo vitrine remplacée est effacée du disque. */
     suspend fun saveVoyage(id: Long, titre: String, description: String, coverPath: String?): Long {
@@ -81,7 +77,7 @@ class JournalRepository(
 
     fun observeEtape(id: Long): Flow<Etape?> = etapeDao.observe(id).map { it?.toEtape() }
 
-    /** L'étape et ses photos dans UNE transaction : jamais une étape sans ses photos, même si l'app meurt entre les deux. */
+    /** L'étape et ses photos dans une transaction : jamais une étape sans ses photos, même si l'app meurt entre les deux. */
     suspend fun addEtape(voyageId: Long, titre: String, description: String, lat: Double?, lng: Double?, photos: List<String>): Long {
         val id = db.withTransaction {
             val id = etapeDao.upsert(

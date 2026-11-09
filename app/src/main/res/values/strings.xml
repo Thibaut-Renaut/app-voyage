@@ -14,38 +14,20 @@
     <string name="open_pwa">Ouvrir la PWA</string>
 
     <!-- Voyages -->
-    <string name="new_voyage">Nouveau voyage</string>
-    <string name="edit_voyage">Modifier le voyage</string>
     <string name="delete_voyage">Supprimer le voyage</string>
-    <string name="delete_voyage_confirm">Supprimer « %1$s » et ses %2$d étape(s), photos comprises ? Cette action est définitive.</string>
     <string name="voyage_title">Titre du voyage</string>
     <string name="voyage_description">Description</string>
     <string name="cover">Photo vitrine</string>
-    <string name="choose_cover">Choisir une photo</string>
-    <string name="remove_cover">Retirer</string>
     <string name="active_voyage">Actif</string>
-    <string name="voyages_empty">Aucun voyage pour l’instant. Créez votre premier carnet.</string>
-    <plurals name="voyages_count">
-        <item quantity="one">%d voyage</item>
-        <item quantity="other">%d voyages</item>
-    </plurals>
 
     <!-- Étapes -->
     <string name="etape">Étape</string>
-    <string name="new_etape">Nouvelle étape</string>
     <string name="delete_etape">Supprimer l’étape</string>
     <string name="delete_etape_confirm">Supprimer « %s » et ses photos ?</string>
-    <string name="etape_title">Lieu ou titre de l’étape</string>
-    <string name="etape_description">Votre récit</string>
     <string name="etape_photo">Photo de l’étape</string>
     <string name="etape_missing">Cette étape n’existe plus.</string>
-    <string name="etapes_empty">Aucune étape : ajoutez la première de ce voyage.</string>
-    <string name="save_etape">Enregistrer l’étape</string>
-    <string name="save_offline_hint">Enregistrée tout de suite sur le téléphone, même hors ligne ; elle partira au serveur dès que le réseau le permettra.</string>
-    <string name="photos">Photos</string>
     <string name="take_photo">Prendre une photo</string>
     <string name="from_gallery">Choisir dans la galerie</string>
-    <string name="has_location">Position enregistrée</string>
     <string name="open_map">Voir sur la carte</string>
     <string name="no_map_app">Aucune application de cartes installée</string>
     <plurals name="etapes_count">
@@ -55,16 +37,9 @@
 
     <!-- Synchronisation -->
     <string name="synced">Synchronisé</string>
-    <string name="pending">En attente</string>
-    <plurals name="pending_count">
-        <item quantity="one">%d en attente d’envoi</item>
-        <item quantity="other">%d en attente d’envoi</item>
-    </plurals>
 
     <!-- Position -->
-    <string name="location">Position</string>
     <string name="location_value">%1$.5f, %2$.5f</string>
-    <string name="location_accuracy">à %1$d m près (%2$s)</string>
     <string name="location_precise">précise</string>
     <string name="location_approximate">approximative</string>
     <string name="add_location">Ma position</string>
@@ -224,6 +199,9 @@ Ajoutez votre première aventure ci-dessus !</string>
     <string name="trajet_to">Jusqu’à l’étape</string>
     <string name="trajet_pick_etape">Choisir…</string>
     <string name="trajet_name">Nom du trajet</string>
+    <string name="trajet_name_from_to">De %1$s à %2$s</string>
+    <string name="trajet_name_from">Depuis %s</string>
+    <string name="trajet_name_to">Vers %s</string>
     <string name="trajet_name_placeholder">Ex : De Bavella à Piana</string>
     <string name="trajet_save_gpx">Enregistrer le GPX</string>
     <string name="trajet_gpx_saved">GPX enregistré. Pour Strava : strava.com › + › Importer une activité.</string>

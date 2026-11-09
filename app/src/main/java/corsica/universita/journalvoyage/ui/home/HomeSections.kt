@@ -42,7 +42,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +49,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -88,11 +88,11 @@ import corsica.universita.journalvoyage.ui.theme.Gray700
 import corsica.universita.journalvoyage.ui.theme.Green100
 import corsica.universita.journalvoyage.ui.theme.Green200
 import corsica.universita.journalvoyage.ui.theme.Green300
+import corsica.universita.journalvoyage.ui.theme.Green50
 import corsica.universita.journalvoyage.ui.theme.Green600
 import corsica.universita.journalvoyage.ui.theme.Green700
 import corsica.universita.journalvoyage.ui.theme.Green900
 import corsica.universita.journalvoyage.ui.theme.RadiusLg
-import corsica.universita.journalvoyage.ui.theme.RadiusMd
 import corsica.universita.journalvoyage.ui.theme.RadiusSm
 import corsica.universita.journalvoyage.ui.theme.SectionLabel
 import java.text.SimpleDateFormat
@@ -186,7 +186,7 @@ fun EtapeFormSection(
                 FieldLabel(stringResource(R.string.gps_label))
                 FormField("", form.lat?.let { String.format(Locale.ROOT, "%.6f", it) } ?: "", {}, stringResource(R.string.latitude), readOnly = true, showLabel = false)
                 FormField("", form.lng?.let { String.format(Locale.ROOT, "%.6f", it) } ?: "", {}, stringResource(R.string.longitude), readOnly = true, showLabel = false)
-                SoftButton(stringResource(R.string.add_location), Icons.Outlined.NearMe, onClick = { locationGate(onLocate) }, background = corsica.universita.journalvoyage.ui.theme.Green50)
+                SoftButton(stringResource(R.string.add_location), Icons.Outlined.NearMe, onClick = { locationGate(onLocate) }, background = Green50)
                 when (geo) {
                     GeoStatus.Idle -> Unit
                     GeoStatus.Searching -> Row(verticalAlignment = Alignment.CenterVertically) {
@@ -325,7 +325,7 @@ fun VoyageCard(voyage: Voyage, active: Boolean, onOpen: () -> Unit, onEdit: () -
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.AutoMirrored.Outlined.MenuBook, null, tint = Green700, modifier = Modifier.size(14.dp))
                 Text(
-                    androidx.compose.ui.res.pluralStringResource(R.plurals.etapes_count, voyage.etapesCount, voyage.etapesCount),
+                    pluralStringResource(R.plurals.etapes_count, voyage.etapesCount, voyage.etapesCount),
                     fontSize = 12.5.sp, color = Green700, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 5.dp),
                 )
             }

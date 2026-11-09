@@ -3,6 +3,7 @@ package corsica.universita.journalvoyage.ui.home
 import android.Manifest
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -19,15 +20,14 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.windowInsetsTopHeight
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.Route
@@ -40,7 +40,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,12 +56,14 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import corsica.universita.journalvoyage.R
+import corsica.universita.journalvoyage.data.Destinations
 import corsica.universita.journalvoyage.data.onlineFlow
 import corsica.universita.journalvoyage.ui.common.ConsentBanner
 import corsica.universita.journalvoyage.ui.common.NotificationsBanner
@@ -88,8 +89,10 @@ import corsica.universita.journalvoyage.ui.theme.Green700
 import corsica.universita.journalvoyage.ui.theme.Green900
 import corsica.universita.journalvoyage.ui.theme.SectionLabel
 import corsica.universita.journalvoyage.ui.trajet.TrajetsSection
-import kotlinx.coroutines.delay
 import java.io.File
+import kotlinx.coroutines.delay
+
+private const val TAG = "Journal"
 
 /**
  * L'accueil : la page unique de la PWA, section par section, dans le même ordre —
@@ -105,7 +108,7 @@ fun HomeScreen(onOpenEtape: (Long) -> Unit, onOpenTrajet: (Long) -> Unit) {
     val consent by viewModel.consent.collectAsStateWithLifecycle()
     val dialog by viewModel.dialog.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val online by remember { context.onlineFlow() }.collectAsState(initial = true)
+    val online by remember { context.onlineFlow() }.collectAsStateWithLifecycle(initialValue = true)
 
     // Non null = la caméra est ouverte sur ce fichier (saveable : une rotation ne la ferme pas).
     var cameraTarget by rememberSaveable { mutableStateOf<String?>(null) }
@@ -119,7 +122,7 @@ fun HomeScreen(onOpenEtape: (Long) -> Unit, onOpenTrajet: (Long) -> Unit) {
         CameraCapture(
             file = File(target),
             onCaptured = { file ->
-                Log.d("Journal", "Photo enregistrée : ${file.absolutePath} (${file.length() / 1024} Ko)")
+                Log.d(TAG, "Photo enregistrée : ${file.absolutePath} (${file.length() / 1024} Ko)")
                 viewModel.addPhoto(file.absolutePath)
                 cameraTarget = null
             },
@@ -151,7 +154,7 @@ fun HomeScreen(onOpenEtape: (Long) -> Unit, onOpenTrajet: (Long) -> Unit) {
                     onTitre = viewModel::setEtapeTitre,
                     onDescription = viewModel::setEtapeDescription,
                     onCamera = { cameraTarget = viewModel.newPhotoFile().absolutePath },
-                    onGallery = { gallery.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+                    onGallery = { gallery.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
                     onRemovePhoto = viewModel::removePhoto,
                     onLocate = viewModel::locate,
                     onSave = { viewModel.saveEtape(online) },
@@ -168,7 +171,7 @@ fun HomeScreen(onOpenEtape: (Long) -> Unit, onOpenTrajet: (Long) -> Unit) {
                 item {
                     Text(
                         stringResource(R.string.journal_empty), color = Gray500, fontSize = 15.sp,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
                     )
                 }
@@ -206,7 +209,7 @@ fun HomeScreen(onOpenEtape: (Long) -> Unit, onOpenTrajet: (Long) -> Unit) {
                     Modifier.padding(start = 16.dp, end = 16.dp, top = 40.dp, bottom = 10.dp),
                 )
             }
-            corsica.universita.journalvoyage.data.Destinations.all.forEach { d ->
+            Destinations.all.forEach { d ->
                 item(key = "dest-${d.nom}") { DestinationCard(d, Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) }
             }
             item { Footer() }
@@ -308,11 +311,10 @@ private fun ToastHost(viewModel: HomeViewModel, modifier: Modifier) {
         }
     }
     val t = current ?: return
-    @Suppress("SpreadOperator")
     Text(
         stringResource(t.text, *t.args.toTypedArray()),
         color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium,
-        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+        textAlign = TextAlign.Center,
         modifier = modifier
             .padding(horizontal = 24.dp)
             .clip(CircleShape)
@@ -325,12 +327,12 @@ private fun ToastHost(viewModel: HomeViewModel, modifier: Modifier) {
 @Composable
 private fun Footer() {
     Column(
-        Modifier.fillMaxWidth().padding(top = 48.dp).border(width = 0.dp, color = Color.Transparent),
+        Modifier.fillMaxWidth().padding(top = 48.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         HorizontalDivider(color = Gray200)
         Text(stringResource(R.string.app_name), fontFamily = Fraunces, fontWeight = FontWeight.Bold, fontSize = 17.5.sp, color = Green900, modifier = Modifier.padding(top = 28.dp))
-        Text(stringResource(R.string.footer_meta), fontSize = 13.sp, color = Gray500, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 28.dp))
+        Text(stringResource(R.string.footer_meta), fontSize = 13.sp, color = Gray500, textAlign = TextAlign.Center, modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 28.dp))
         Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
     }
 }

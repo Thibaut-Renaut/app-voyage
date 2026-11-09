@@ -21,13 +21,7 @@ interface VoyageDao {
     fun all(): Flow<List<VoyageWithCount>>
 
     @Query("SELECT * FROM voyages WHERE id = :id")
-    fun observe(id: Long): Flow<VoyageEntity?>
-
-    @Query("SELECT * FROM voyages WHERE id = :id")
     suspend fun get(id: Long): VoyageEntity?
-
-    @Query("SELECT id FROM voyages ORDER BY createdAt, id LIMIT 1")
-    suspend fun firstId(): Long?
 
     @Query("SELECT COUNT(*) FROM voyages")
     suspend fun count(): Int
@@ -61,7 +55,7 @@ interface EtapeDao {
     @Insert
     suspend fun insertPhotos(photos: List<PhotoEntity>)
 
-    /** Les fichiers à effacer AVANT que CASCADE n'efface les lignes qui les désignent. */
+    /** Les fichiers à effacer avant que CASCADE n'efface les lignes qui les désignent. */
     @Query("SELECT path FROM photos WHERE etapeId = :etapeId")
     suspend fun photoPaths(etapeId: Long): List<String>
 

@@ -15,8 +15,8 @@ import java.util.Locale
 
 /**
  * Partager une étape (ACTION_SEND, intent implicite : l'OS liste les apps qui l'acceptent), photos comprises.
- * Les photos sont dans le stockage PRIVÉ : le FileProvider en fait des URI content://, et
- * FLAG_GRANT_READ_URI_PERMISSION donne à l'app choisie le droit de lire CES fichiers, pour cette fois.
+ * Les photos sont dans le stockage privé : le FileProvider en fait des URI content://, et
+ * FLAG_GRANT_READ_URI_PERMISSION donne à l'app choisie le droit de lire ces fichiers, pour cette fois.
  */
 fun Context.shareEtape(etape: Etape) {
     val text = buildString {

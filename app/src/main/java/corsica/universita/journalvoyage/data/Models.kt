@@ -30,8 +30,6 @@ data class Etape(
 fun Long.toDateTime(): String =
     DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date(this))
 
-fun Long.toDate(): String = DateFormat.getDateInstance(DateFormat.LONG).format(Date(this))
-
 /** v2 : un trajet enregistré. endedAt == null : en cours. */
 data class Trajet(
     val id: Long,

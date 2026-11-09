@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.work.WorkManager
 import com.google.firebase.messaging.FirebaseMessaging
 import corsica.universita.journalvoyage.analytics.Analytics
+import corsica.universita.journalvoyage.data.GpxExporter
 import corsica.universita.journalvoyage.data.JournalRepository
 import corsica.universita.journalvoyage.data.PhotoStore
 import corsica.universita.journalvoyage.data.local.JournalDatabase
@@ -37,6 +38,8 @@ object JournalContainer {
         private set
     lateinit var analytics: Analytics
         private set
+    lateinit var gpxExporter: GpxExporter
+        private set
 
     /** Un texte ou une photo reçus d'une autre app, en attente d'être versés dans le formulaire d'étape. */
     val pendingShare = MutableStateFlow<SharedContent?>(null)
@@ -50,6 +53,7 @@ object JournalContainer {
         photoStore = PhotoStore(context)
         locationSource = LocationSource(context)
         analytics = Analytics(context, settings, appScope)
+        gpxExporter = GpxExporter(context)
         repository = JournalRepository(database, syncApi(okHttp(context)), WorkManager.getInstance(context), photoStore)
     }
 }
@@ -73,7 +77,12 @@ class JournalApp : Application() {
         fetchFcmToken()
     }
 
-    /** Le jeton courant (onNewToken n'est appelé qu'à sa création ou à son renouvellement). */
+    /**
+     * Le jeton courant (onNewToken n'est appelé qu'à sa création ou à son renouvellement).
+     * getToken() est marqué « deprecated » dans firebase-messaging 25.x, sans API de remplacement :
+     * c'est toujours le moyen documenté d'obtenir le jeton, d'où la suppression ciblée de l'avertissement.
+     */
+    @Suppress("DEPRECATION")
     private fun fetchFcmToken() {
         FirebaseMessaging.getInstance().token
             .addOnSuccessListener { token ->

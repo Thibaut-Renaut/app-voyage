@@ -35,7 +35,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /**
- * LA FONCTIONNALITÉ NATIVE : l'enregistreur de trajet GPS.
+ * La fonctionnalité native : l'enregistreur de trajet GPS.
  *
  * Un « foreground service » de type location : l'app déclare à l'OS qu'elle fait un travail visible
  * par l'utilisateur (la notification permanente, avec un chronomètre et un bouton « Arrêter »).
@@ -90,11 +90,11 @@ class TrackingService : Service() {
     private fun start(voyageId: Long) {
         if (_active.value != null || starting || voyageId < 0) return
         startedAt = System.currentTimeMillis()
-        // 1. startForeground AVANT tout le reste : l'OS laisse 5 s après startForegroundService(), sinon il tue l'app.
+        // 1. startForeground avant tout le reste : l'OS laisse 5 s après startForegroundService(), sinon il tue l'app.
         try {
             ServiceCompat.startForeground(this, NOTIFICATION_ID, notification(), foregroundType())
         } catch (e: Exception) {
-            // SecurityException : permission de localisation absente (Android 14+ la vérifie ICI).
+            // SecurityException : permission de localisation absente (Android 14+ la vérifie ici).
             // ForegroundServiceStartNotAllowedException (Android 12+) : démarré depuis l'arrière-plan.
             Log.e(TAG, "Démarrage du suivi refusé par l'OS : ${e.javaClass.simpleName} — ${e.message}")
             analytics.trajetFailed(if (e is SecurityException) "permission_denied" else "fgs_not_allowed")
@@ -194,7 +194,7 @@ class TrackingService : Service() {
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(getString(R.string.tracking_notif_title))
             .setContentText(text)
-            .setOngoing(true) // l'utilisateur ne peut pas la balayer : elle EST le contrat avec l'OS
+            .setOngoing(true) // l'utilisateur ne peut pas la balayer : elle est le contrat avec l'OS
             .setOnlyAlertOnce(true) // mise à jour à chaque point, sans son ni vibration
             .setUsesChronometer(true)
             .setWhen(startedAt)
@@ -219,7 +219,7 @@ class TrackingService : Service() {
 
         private val _active = MutableStateFlow<Long?>(null)
 
-        /** L'id du trajet en cours d'enregistrement dans CE process (null : aucun). Observé par les écrans. */
+        /** L'id du trajet en cours d'enregistrement dans ce process (null : aucun). Observé par les écrans. */
         val activeTrajetId: StateFlow<Long?> = _active.asStateFlow()
 
         /** startForegroundService : la promesse faite à l'OS d'appeler startForeground() dans les 5 s. */

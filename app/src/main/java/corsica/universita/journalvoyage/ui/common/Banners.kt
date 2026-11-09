@@ -30,8 +30,8 @@ import corsica.universita.journalvoyage.ui.permissions.PermissionState
 import corsica.universita.journalvoyage.ui.permissions.rememberPermissionFlow
 
 /**
- * POST_NOTIFICATIONS, demandée APRÈS un geste de l'utilisateur (ce bouton), jamais au lancement.
- * Affiché tant que areNotificationsEnabled() est faux : permission refusée OU notifications coupées dans les réglages.
+ * POST_NOTIFICATIONS, demandée après un geste de l'utilisateur (ce bouton), jamais au lancement.
+ * Affiché tant que areNotificationsEnabled() est faux : permission refusée ou notifications coupées dans les réglages.
  * Après un refus, le bouton mène aux réglages de notification de l'app : l'app marche sans.
  */
 @Composable

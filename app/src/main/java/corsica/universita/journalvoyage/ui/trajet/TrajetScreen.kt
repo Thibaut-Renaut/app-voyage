@@ -1,24 +1,11 @@
 package corsica.universita.journalvoyage.ui.trajet
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.runtime.remember
-import androidx.compose.ui.text.style.TextOverflow
-import corsica.universita.journalvoyage.data.Etape
-import corsica.universita.journalvoyage.ui.common.FieldLabel
-import corsica.universita.journalvoyage.ui.common.FormField
-import corsica.universita.journalvoyage.ui.common.ModalCard
-import corsica.universita.journalvoyage.ui.common.PrimaryButton
-import corsica.universita.journalvoyage.ui.common.SmallButton
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import android.content.Intent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -35,6 +22,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FiberManualRecord
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Stop
@@ -42,6 +31,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -51,9 +42,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -68,6 +61,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -77,26 +71,45 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import corsica.universita.journalvoyage.JournalContainer
 import corsica.universita.journalvoyage.R
+import corsica.universita.journalvoyage.data.Etape
 import corsica.universita.journalvoyage.data.Trajet
 import corsica.universita.journalvoyage.data.toDateTime
 import corsica.universita.journalvoyage.tracking.TrackMath
 import corsica.universita.journalvoyage.tracking.TrackPoint
 import corsica.universita.journalvoyage.tracking.TrackingService
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.File
+import corsica.universita.journalvoyage.ui.common.FieldLabel
+import corsica.universita.journalvoyage.ui.common.FormField
+import corsica.universita.journalvoyage.ui.common.ModalCard
+import corsica.universita.journalvoyage.ui.common.PrimaryButton
+import corsica.universita.journalvoyage.ui.common.SmallButton
 import java.util.Locale
 import kotlin.math.cos
 import kotlin.math.roundToInt
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+
+/** Ce que l'écran doit faire une fois l'export prêt : le ViewModel ne touche jamais à l'interface. */
+sealed interface GpxEvent {
+    data object Saved : GpxEvent
+    data class Share(val uri: Uri) : GpxEvent
+}
 
 class TrajetViewModel(private val trajetId: Long) : ViewModel() {
     private val repository = JournalContainer.repository
+    private val exporter = JournalContainer.gpxExporter
+
+    private val _events = Channel<GpxEvent>(Channel.BUFFERED)
+    val events: Flow<GpxEvent> = _events.receiveAsFlow()
 
     /** null = pas encore lu ; Loaded(null) = supprimé. */
     val trajet: StateFlow<Loaded?> = repository.observeTrajet(trajetId).map { Loaded(it) }
@@ -118,36 +131,26 @@ class TrajetViewModel(private val trajetId: Long) : ViewModel() {
         viewModelScope.launch { repository.renameTrajet(trajetId, nom) }
     }
 
-    private fun displayName(context: Context, t: Trajet) = t.nom ?: context.getString(R.string.trajet_title, t.startedAt.toDateTime())
+    /** Le GPX du trajet ; `fallbackName` (« Trajet du … ») sert tant que le trajet n'a pas de nom. */
+    private suspend fun gpx(fallbackName: String): String? {
+        val t = trajet.value?.trajet ?: return null
+        return TrackMath.toGpx(t.nom ?: fallbackName, repository.trackPointsOnce(trajetId))
+    }
 
-    private suspend fun gpx(context: Context, t: Trajet): String = TrackMath.toGpx(displayName(context, t), repository.trackPointsOnce(trajetId))
-
-    /** « Enregistrer le GPX » : écrit là où l'utilisateur l'a choisi (Téléchargements, Drive…), via le sélecteur du système. */
-    fun saveGpx(context: Context, uri: android.net.Uri) {
+    /** « Enregistrer le GPX » : écrit là où l'utilisateur l'a choisi (Téléchargements, Drive…). */
+    fun saveGpx(uri: Uri, fallbackName: String) {
         viewModelScope.launch {
-            val t = trajet.value?.trajet ?: return@launch
-            val text = gpx(context, t)
-            withContext(Dispatchers.IO) {
-                context.contentResolver.openOutputStream(uri)?.use { it.write(text.toByteArray()) }
-            }
-            android.widget.Toast.makeText(context, R.string.trajet_gpx_saved, android.widget.Toast.LENGTH_LONG).show()
+            val text = gpx(fallbackName) ?: return@launch
+            exporter.save(uri, text)
+            _events.send(GpxEvent.Saved)
         }
     }
 
-    fun shareGpx(context: Context) {
+    /** « Partager le GPX » : un fichier temporaire, confié à l'app choisie par l'utilisateur. */
+    fun shareGpx(fallbackName: String) {
         viewModelScope.launch {
-            val t = trajet.value?.trajet ?: return@launch
-            val file = withContext(Dispatchers.IO) {
-                val gpx = gpx(context, t)
-                File(context.cacheDir, "exports").apply { mkdirs() }.resolve("trajet_$trajetId.gpx").apply { writeText(gpx) }
-            }
-            val uri = JournalContainer.photoStore.uriFor(file.absolutePath)
-            val send = Intent(Intent.ACTION_SEND).apply {
-                type = "application/gpx+xml"
-                putExtra(Intent.EXTRA_STREAM, uri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
-            context.startActivity(Intent.createChooser(send, context.getString(R.string.trajet_share_title)))
+            val text = gpx(fallbackName) ?: return@launch
+            _events.send(GpxEvent.Share(exporter.forSharing("trajet_$trajetId.gpx", text)))
         }
     }
 
@@ -172,9 +175,19 @@ fun TrajetScreen(trajetId: Long, onBack: () -> Unit) {
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
     var naming by rememberSaveable { mutableStateOf(false) }
     val etapes by viewModel.etapes.collectAsStateWithLifecycle()
+    val fallbackName = loaded?.trajet?.let { stringResource(R.string.trajet_title, it.startedAt.toDateTime()) }.orEmpty()
     // « Enregistrer le GPX » : le sélecteur de fichiers du système (aucune permission de stockage).
     val saveLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/gpx+xml")) { uri ->
-        uri?.let { viewModel.saveGpx(context, it) }
+        uri?.let { viewModel.saveGpx(it, fallbackName) }
+    }
+    // Les événements d'export : un message, ou le sélecteur de partage.
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                GpxEvent.Saved -> Toast.makeText(context, R.string.trajet_gpx_saved, Toast.LENGTH_LONG).show()
+                is GpxEvent.Share -> context.shareGpx(event.uri)
+            }
+        }
     }
 
     // Pendant l'enregistrement, la durée avance chaque seconde, même sans nouveau point.
@@ -196,7 +209,7 @@ fun TrajetScreen(trajetId: Long, onBack: () -> Unit) {
                         IconButton(onClick = { saveLauncher.launch(gpxFileName(trajet)) }, enabled = points.isNotEmpty()) {
                             Icon(Icons.Default.Download, stringResource(R.string.trajet_save_gpx))
                         }
-                        IconButton(onClick = { viewModel.shareGpx(context) }, enabled = points.isNotEmpty()) {
+                        IconButton(onClick = { viewModel.shareGpx(fallbackName) }, enabled = points.isNotEmpty()) {
                             Icon(Icons.Default.Share, stringResource(R.string.trajet_share_gpx))
                         }
                         IconButton(onClick = { confirmDelete = true }) { Icon(Icons.Default.Delete, stringResource(R.string.trajet_delete)) }
@@ -305,13 +318,14 @@ private fun NameTrajetDialog(initial: String, etapes: List<Etape>, onDismiss: ()
     var from by rememberSaveable { mutableStateOf<String?>(null) }
     var to by rememberSaveable { mutableStateOf<String?>(null) }
     val titres = etapes.sortedBy { it.date }.map { it.titre }
+    val res = LocalContext.current.resources
     fun compose() {
         val f = from
         val t = to
         nom = when {
-            f != null && t != null -> "De $f à $t"
-            f != null -> "Depuis $f"
-            t != null -> "Vers $t"
+            f != null && t != null -> res.getString(R.string.trajet_name_from_to, f, t)
+            f != null -> res.getString(R.string.trajet_name_from, f)
+            t != null -> res.getString(R.string.trajet_name_to, t)
             else -> nom
         }
     }
@@ -347,6 +361,16 @@ private fun EtapePicker(label: String, selected: String?, titres: List<String>, 
             }
         }
     }
+}
+
+/** Le GPX vers une autre app (Drive, e-mail…). FLAG_GRANT_READ_URI_PERMISSION : elle ne lit que ce fichier. */
+private fun Context.shareGpx(uri: Uri) {
+    val send = Intent(Intent.ACTION_SEND).apply {
+        type = "application/gpx+xml"
+        putExtra(Intent.EXTRA_STREAM, uri)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+    startActivity(Intent.createChooser(send, getString(R.string.trajet_share_title)))
 }
 
 @Composable

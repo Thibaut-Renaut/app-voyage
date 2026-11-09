@@ -22,13 +22,13 @@ import kotlinx.serialization.Serializable
 
 /**
  * Navigation 3 : naviguer = ajouter une clé ; revenir = retirer la dernière.
- * Les deux décorateurs donnent à CHAQUE entrée son état sauvegardé et ses ViewModels.
+ * Les deux décorateurs donnent à chaque entrée son état sauvegardé et ses ViewModels.
  */
 @Composable
 fun JournalNavigation(appViewModel: AppViewModel) {
     val backStack = rememberNavBackStack(Home)
 
-    /** Retirer CETTE clé, seulement si elle est au sommet (un double-tap sur Retour ne vide pas la pile). */
+    /** Retirer cette clé, seulement si elle est au sommet (un double-tap sur Retour ne vide pas la pile). */
     fun pop(key: NavKey) {
         if (backStack.size > 1 && backStack.last() == key) backStack.removeAt(backStack.lastIndex)
     }

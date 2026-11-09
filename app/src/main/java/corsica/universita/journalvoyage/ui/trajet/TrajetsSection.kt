@@ -51,8 +51,11 @@ import corsica.universita.journalvoyage.notif.Notifications
 import corsica.universita.journalvoyage.tracking.TrackMath
 import corsica.universita.journalvoyage.tracking.TrackingService
 import corsica.universita.journalvoyage.ui.common.InfoCard
-import corsica.universita.journalvoyage.ui.permissions.PermissionAction
+import corsica.universita.journalvoyage.ui.common.SoftButton
+import corsica.universita.journalvoyage.ui.permissions.PermissionState
 import corsica.universita.journalvoyage.ui.permissions.rememberPermissionFlow
+import corsica.universita.journalvoyage.ui.permissions.rememberPermissionGate
+import corsica.universita.journalvoyage.ui.theme.Green50
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -77,6 +80,10 @@ fun TrajetsSection(voyageId: Long, onOpen: (Long) -> Unit) {
 
     val location = rememberPermissionFlow(
         Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION, requireAll = false,
+    )
+    val locationGate = rememberPermissionGate(
+        location, stringResource(R.string.trajet_start), stringResource(R.string.trajet_location_rationale),
+        onDenied = { JournalContainer.analytics.trajetFailed("permission_denied") },
     )
     // Relus à chaque retour dans l'app (l'utilisateur a pu les changer dans les réglages).
     var locationOn by remember { mutableStateOf(true) }
@@ -126,19 +133,14 @@ fun TrajetsSection(voyageId: Long, onOpen: (Long) -> Unit) {
                     },
                 ),
             )
-            else -> PermissionAction(
-                flow = location,
-                label = stringResource(R.string.trajet_start),
-                icon = Icons.AutoMirrored.Filled.DirectionsWalk,
-                rationale = stringResource(R.string.trajet_location_rationale),
-                onGranted = {
+            else -> SoftButton(stringResource(R.string.trajet_start), Icons.AutoMirrored.Filled.DirectionsWalk, background = Green50, onClick = {
+                locationGate {
                     openWhenStarted = true
                     TrackingService.start(context, voyageId)
-                },
-                onDenied = { JournalContainer.analytics.trajetFailed("permission_denied") },
-            )
+                }
+            })
         }
-        if (active == null && locationOn && !precise && location.state == corsica.universita.journalvoyage.ui.permissions.PermissionState.Granted) {
+        if (active == null && locationOn && !precise && location.state == PermissionState.Granted) {
             Text(stringResource(R.string.trajet_approximate_warning), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
         }
         if (!notificationsOn) {

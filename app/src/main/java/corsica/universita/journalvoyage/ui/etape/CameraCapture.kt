@@ -37,7 +37,7 @@ import corsica.universita.journalvoyage.R
 import java.io.File
 
 /**
- * CameraX. Deux « cas d'usage » liés au cycle de vie de l'écran :
+ * La prise de vue, avec CameraX : deux « cas d'usage » liés au cycle de vie de l'écran :
  * - Preview : l'image de la caméra, affichée dans une PreviewView (une View classique, intégrée via AndroidView) ;
  * - ImageCapture : la prise de vue, écrite directement dans `file`.
  * `bindToLifecycle` : CameraX ouvre la caméra en ON_START et la libère en ON_STOP — aucune fuite si l'app passe en arrière-plan.

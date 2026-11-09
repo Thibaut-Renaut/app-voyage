@@ -34,8 +34,10 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
@@ -162,7 +164,7 @@ fun FormField(
             placeholder = { Text(placeholder, color = Gray400, fontSize = 15.sp) },
             singleLine = minLines == 1, minLines = minLines,
             shape = RadiusSm,
-            textStyle = androidx.compose.ui.text.TextStyle(fontFamily = PlusJakartaSans, fontSize = 15.sp),
+            textStyle = TextStyle(fontFamily = PlusJakartaSans, fontSize = 15.sp),
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             colors = OutlinedTextFieldDefaults.colors(
                 unfocusedContainerColor = if (readOnly) Color(0xFFF0F0ED) else Cream50,
@@ -264,5 +266,5 @@ fun Pill(text: String, icon: ImageVector, background: Color, color: Color, modif
 }
 
 /** .card : fond blanc, bordure grise, rayon md. */
-fun Modifier.pwaCard(radius: androidx.compose.ui.graphics.Shape = RadiusMd, borderColor: Color = Gray200, borderWidth: Float = 1f) =
+fun Modifier.pwaCard(radius: Shape = RadiusMd, borderColor: Color = Gray200, borderWidth: Float = 1f) =
     this.clip(radius).background(Color.White).border(borderWidth.dp, borderColor, radius)

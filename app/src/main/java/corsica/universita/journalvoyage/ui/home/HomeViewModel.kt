@@ -14,6 +14,7 @@ import corsica.universita.journalvoyage.JournalContainer
 import corsica.universita.journalvoyage.R
 import corsica.universita.journalvoyage.data.Etape
 import corsica.universita.journalvoyage.data.Voyage
+import java.io.File
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -27,10 +28,10 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.io.File
 
 /** Les fenêtres (modales) de la PWA : créer, modifier, supprimer, changer de carnet. */
 enum class VoyageDialog { None, Create, Edit, Delete, Switch }
@@ -292,7 +293,7 @@ class HomeViewModel(private val saved: SavedStateHandle) : ViewModel() {
     }
 
     /**
-     * Vider un brouillon = remettre les valeurs par défaut, JAMAIS saved.remove() : remove() détache le
+     * Vider un brouillon = remettre les valeurs par défaut, jamais saved.remove() : remove() détache le
      * StateFlow rendu par getStateFlow(), et les saisies suivantes ne seraient plus émises (le champ resterait vide).
      */
     private fun resetVoyageForm() {
@@ -331,7 +332,7 @@ class HomeViewModel(private val saved: SavedStateHandle) : ViewModel() {
                     saved[E_DESC] = text
                 }
                 share.imageUri?.let { uri -> photoStore.import(Uri.parse(uri))?.let(::addPhoto) }
-                toast(R.string.toast_share_received, state.first { it.active != null }.active!!.titre)
+                toast(R.string.toast_share_received, state.mapNotNull { it.active }.first().titre)
             }
         }
     }

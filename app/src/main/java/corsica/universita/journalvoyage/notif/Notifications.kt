@@ -13,7 +13,7 @@ import corsica.universita.journalvoyage.MainActivity
 import corsica.universita.journalvoyage.R
 
 /**
- * Les notifications de l'app. Depuis Android 8, chaque notification appartient à un CANAL : l'app propose
+ * Les notifications de l'app. Depuis Android 8, chaque notification appartient à un canal : l'app propose
  * une importance, puis l'utilisateur règle chaque canal lui-même. Depuis Android 13, il faut en plus
  * la permission POST_NOTIFICATIONS.
  */
@@ -87,7 +87,7 @@ object Notifications {
     }
 
     /**
-     * Le PendingIntent : un Intent tout prêt, confié à l'OS, qu'il lancera au clic À LA PLACE de l'app
+     * Le PendingIntent : un Intent tout prêt, confié à l'OS, qu'il lancera au clic à la place de l'app
      * (peut-être tuée entre-temps). FLAG_IMMUTABLE : personne ne peut le modifier.
      * requestCode différent par cible : sinon l'OS réutiliserait le premier, et toutes ouvriraient la même étape.
      */
