@@ -10,6 +10,13 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- v2 : l'enregistreur de trajet. Permissions « normales » (sans dialogue), exigées par l'OS pour un
+         service de premier plan de type « location » (Android 9+ et 14+). La permission de localisation
+         « pendant l'utilisation » suffit : PAS de ACCESS_BACKGROUND_LOCATION, le service est démarré app ouverte. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+
     <!-- required="false" : l'app reste installable sur un appareil sans caméra. -->
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
@@ -87,6 +94,13 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
+        <!-- v2 : la fonctionnalité native. foregroundServiceType="location" : l'OS sait pourquoi ce service tourne,
+             l'affiche dans le gestionnaire de tâches, et vérifie la permission de localisation à startForeground(). -->
+        <service
+            android:name=".tracking.TrackingService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
 
         <!-- Réception FCM. exported="false" : seul Play Services (via la lib Firebase) lui parle. -->
         <service

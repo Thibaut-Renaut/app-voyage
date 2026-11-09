@@ -31,8 +31,8 @@ android {
         minSdk = 26
         targetSdk = 37
         // +1 à chaque livraison : Android refuse d'installer un versionCode inférieur par-dessus.
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "2.0"
 
         buildConfigField("String", "PWA_HOST", "\"$pwaHost\"")
         buildConfigField("String", "SYNC_BASE_URL", "\"$syncBaseUrl\"")

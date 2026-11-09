@@ -55,6 +55,7 @@ class MainActivity : ComponentActivity() {
         // « données personnalisées » en String : on accepte les deux.
         val etapeId = intent.longOrStringExtra(Notifications.EXTRA_ETAPE_ID)
         val voyageId = intent.longOrStringExtra(Notifications.EXTRA_VOYAGE_ID)
+        val trajetId = intent.longOrStringExtra(Notifications.EXTRA_TRAJET_ID)
         val source = intent.getStringExtra(Notifications.EXTRA_SOURCE)
             ?: if (intent.extras?.containsKey("google.message_id") == true) "push" else null
         if (source != null) {
@@ -62,6 +63,7 @@ class MainActivity : ComponentActivity() {
             JournalContainer.analytics.notificationClicked(source)
         }
         when {
+            trajetId != null -> { appViewModel.openTrajet(trajetId); return }
             etapeId != null -> { appViewModel.openEtape(etapeId); return }
             voyageId != null -> { appViewModel.openVoyage(voyageId); return }
         }

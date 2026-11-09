@@ -61,6 +61,7 @@ class PermissionFlow internal constructor(
 
     private var launcher: ActivityResultLauncher<Array<String>>? = null
     private var onGranted: (() -> Unit)? = null
+    private var onDenied: (() -> Unit)? = null
 
     private fun isGranted(p: String) =
         ContextCompat.checkSelfPermission(activity, p) == PackageManager.PERMISSION_GRANTED
@@ -86,8 +87,9 @@ class PermissionFlow internal constructor(
     }
 
     /** Affiche le dialogue de l'OS — qui ne s'affichera pas en DeniedForever (réponse false immédiate). */
-    fun request(onGranted: () -> Unit = {}) {
+    fun request(onGranted: () -> Unit = {}, onDenied: () -> Unit = {}) {
         this.onGranted = onGranted
+        this.onDenied = onDenied
         markAsked()
         launcher?.launch(permissions.toTypedArray())
     }
@@ -95,8 +97,9 @@ class PermissionFlow internal constructor(
     internal fun onResult(result: Map<String, Boolean>) {
         state = compute(afterResult = true)
         Log.d("Journal", "Permission $result → $state")
-        if (state == PermissionState.Granted) onGranted?.invoke()
+        if (state == PermissionState.Granted) onGranted?.invoke() else onDenied?.invoke()
         onGranted = null
+        onDenied = null
     }
 
     fun openSettings() {
@@ -140,10 +143,11 @@ fun PermissionAction(
     icon: ImageVector,
     rationale: String,
     onGranted: () -> Unit,
+    onDenied: () -> Unit = {},
 ) {
     var showRationale by rememberSaveable { mutableStateOf(false) }
     when (flow.state) {
-        PermissionState.NotAsked -> OutlinedButton(onClick = { flow.request(onGranted) }) { ButtonContent(icon, label) }
+        PermissionState.NotAsked -> OutlinedButton(onClick = { flow.request(onGranted, onDenied) }) { ButtonContent(icon, label) }
         PermissionState.DeniedOnce -> OutlinedButton(onClick = { showRationale = true }) { ButtonContent(icon, label) }
         PermissionState.DeniedForever -> Column {
             OutlinedButton(onClick = flow::openSettings) {
@@ -164,7 +168,7 @@ fun PermissionAction(
             confirmButton = {
                 TextButton(onClick = {
                     showRationale = false
-                    flow.request(onGranted)
+                    flow.request(onGranted, onDenied)
                 }) { Text(stringResource(R.string.permission_continue)) }
             },
             dismissButton = {

@@ -25,6 +25,7 @@ class AppViewModel : ViewModel() {
 
     fun openEtape(id: Long) = _navigation.trySend(EtapeDetail(id))
     fun openVoyage(id: Long) = _navigation.trySend(VoyageDetail(id))
+    fun openTrajet(id: Long) = _navigation.trySend(TrajetDetail(id))
     fun openHome() = _navigation.trySend(VoyagesList)
 
     /** Un texte ou une photo partagés depuis une autre app : une nouvelle étape, dans le voyage actif. */

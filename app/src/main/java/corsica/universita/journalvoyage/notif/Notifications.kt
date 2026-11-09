@@ -20,10 +20,12 @@ import corsica.universita.journalvoyage.R
 object Notifications {
     const val CHANNEL_SYNC = "sync"         // compte rendu de synchro : LOW, silencieux
     const val CHANNEL_MESSAGES = "messages" // push FCM : HIGH, son + bannière (aussi le canal par défaut, manifest)
+    const val CHANNEL_TRACKING = "trajet"   // v2 : le suivi de trajet en cours, LOW (permanente, silencieuse)
 
     /** Les extras lus par MainActivity.handleIntent. Testable : adb shell am start -n …/.MainActivity --es etapeId 3 */
     const val EXTRA_ETAPE_ID = "etapeId"
     const val EXTRA_VOYAGE_ID = "voyageId"
+    const val EXTRA_TRAJET_ID = "trajetId"
     const val EXTRA_SOURCE = "notifSource"
 
     private const val ID_SYNC = 1
@@ -42,6 +44,12 @@ object Notifications {
             NotificationChannelCompat.Builder(CHANNEL_MESSAGES, NotificationManagerCompat.IMPORTANCE_HIGH)
                 .setName(ctx.getString(R.string.channel_messages_name))
                 .setDescription(ctx.getString(R.string.channel_messages_desc))
+                .build(),
+        )
+        manager.createNotificationChannel(
+            NotificationChannelCompat.Builder(CHANNEL_TRACKING, NotificationManagerCompat.IMPORTANCE_LOW)
+                .setName(ctx.getString(R.string.channel_tracking_name))
+                .setDescription(ctx.getString(R.string.channel_tracking_desc))
                 .build(),
         )
     }

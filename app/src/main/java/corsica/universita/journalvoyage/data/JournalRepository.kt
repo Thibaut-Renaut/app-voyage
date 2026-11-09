@@ -12,9 +12,13 @@ import corsica.universita.journalvoyage.data.local.EtapeEntity
 import corsica.universita.journalvoyage.data.local.EtapeWithPhotos
 import corsica.universita.journalvoyage.data.local.JournalDatabase
 import corsica.universita.journalvoyage.data.local.PhotoEntity
+import corsica.universita.journalvoyage.data.local.TrackPointEntity
+import corsica.universita.journalvoyage.data.local.TrajetEntity
+import corsica.universita.journalvoyage.data.local.TrajetWithCount
 import corsica.universita.journalvoyage.data.local.VoyageEntity
 import corsica.universita.journalvoyage.data.remote.EtapeDto
 import corsica.universita.journalvoyage.data.remote.SyncApi
+import corsica.universita.journalvoyage.tracking.TrackPoint
 import corsica.universita.journalvoyage.work.SyncWorker
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -97,6 +101,35 @@ class JournalRepository(
         photoStore.delete(files)
     }
 
+    // ---- v2 : les trajets (écrits par TrackingService, lus par les écrans) ----
+
+    private val trajetDao = db.trajetDao()
+
+    fun trajets(voyageId: Long): Flow<List<Trajet>> = trajetDao.forVoyage(voyageId).map { list -> list.map { it.toTrajet() } }
+
+    fun observeTrajet(id: Long): Flow<Trajet?> = trajetDao.observe(id).map { it?.toTrajet() }
+
+    fun trackPoints(trajetId: Long): Flow<List<TrackPoint>> = trajetDao.points(trajetId).map { list -> list.map { it.toPoint() } }
+
+    suspend fun startTrajet(voyageId: Long): Long =
+        trajetDao.insert(TrajetEntity(voyageId = voyageId, startedAt = System.currentTimeMillis()))
+
+    /** Le point et la nouvelle distance ensemble : jamais un point compté sans être en base, ou l'inverse. */
+    suspend fun addTrackPoint(trajetId: Long, p: TrackPoint, distanceM: Double) = db.withTransaction {
+        trajetDao.insertPoint(TrackPointEntity(trajetId = trajetId, lat = p.lat, lng = p.lng, altitude = p.altitude, accuracy = p.accuracy, time = p.time))
+        trajetDao.setDistance(trajetId, distanceM)
+    }
+
+    suspend fun finishTrajet(id: Long) = trajetDao.finish(id, System.currentTimeMillis())
+
+    suspend fun closeOrphanTrajets(exceptId: Long?): Int = trajetDao.closeOrphans(exceptId ?: -1)
+
+    suspend fun deleteTrajet(id: Long) {
+        trajetDao.get(id)?.let { trajetDao.delete(it) }
+    }
+
+    suspend fun trackPointsOnce(trajetId: Long): List<TrackPoint> = trajetDao.pointsOnce(trajetId).map { it.toPoint() }
+
     // ---- Premier lancement : les mêmes données de démonstration que la PWA ----
 
     /** initVoyages() + hydrateDestinations() de la PWA : un voyage et trois étapes, déjà « synchronisées ». */
@@ -171,6 +204,10 @@ class JournalRepository(
         const val TAG = "Journal"
     }
 }
+
+private fun TrajetWithCount.toTrajet() = with(trajet) { Trajet(id, voyageId, startedAt, endedAt, distanceM, pointsCount) }
+
+private fun TrackPointEntity.toPoint() = TrackPoint(lat, lng, altitude, accuracy, time)
 
 private fun VoyageEntity.toVoyage() = Voyage(id, titre, description, coverPath, createdAt)
 

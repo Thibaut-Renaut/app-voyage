@@ -66,3 +66,41 @@ data class VoyageWithCount(
     @Embedded val voyage: VoyageEntity,
     val etapesCount: Int,
 )
+
+// ---- v2 (2.0) : l'enregistreur de trajet, la fonctionnalité native ----
+
+/** Un trajet GPS rattaché à un voyage. endedAt NULL = en cours d'enregistrement. */
+@Entity(
+    tableName = "trajets",
+    foreignKeys = [ForeignKey(VoyageEntity::class, ["id"], ["voyageId"], onDelete = ForeignKey.CASCADE)],
+    indices = [Index("voyageId")],
+)
+data class TrajetEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val voyageId: Long,
+    val startedAt: Long,
+    val endedAt: Long? = null,
+    /** Mise à jour à chaque point par le service : la liste affiche la distance sans relire tous les points. */
+    @ColumnInfo(defaultValue = "0") val distanceM: Double = 0.0,
+)
+
+/** Un relevé GPS. altitude : NULL si le fournisseur n'en donne pas. */
+@Entity(
+    tableName = "track_points",
+    foreignKeys = [ForeignKey(TrajetEntity::class, ["id"], ["trajetId"], onDelete = ForeignKey.CASCADE)],
+    indices = [Index("trajetId")],
+)
+data class TrackPointEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val trajetId: Long,
+    val lat: Double,
+    val lng: Double,
+    val altitude: Double?,
+    val accuracy: Float,
+    val time: Long,
+)
+
+data class TrajetWithCount(
+    @Embedded val trajet: TrajetEntity,
+    val pointsCount: Int,
+)

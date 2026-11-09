@@ -10,6 +10,8 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import corsica.universita.journalvoyage.ui.etape.EtapeDetailScreen
 import corsica.universita.journalvoyage.ui.etape.EtapeEditScreen
+import corsica.universita.journalvoyage.ui.trajet.TrajetScreen
+import corsica.universita.journalvoyage.ui.trajet.TrajetsSection
 import corsica.universita.journalvoyage.ui.voyage.VoyageScreen
 import corsica.universita.journalvoyage.ui.voyages.VoyageEditScreen
 import corsica.universita.journalvoyage.ui.voyages.VoyagesScreen
@@ -22,6 +24,7 @@ import kotlinx.serialization.Serializable
 @Serializable data class VoyageDetail(val id: Long) : NavKey
 @Serializable data class EtapeEdit(val voyageId: Long, val sharedText: String? = null, val sharedImage: String? = null) : NavKey
 @Serializable data class EtapeDetail(val id: Long) : NavKey
+@Serializable data class TrajetDetail(val id: Long) : NavKey
 
 /**
  * Navigation 3 : naviguer = ajouter une clé ; revenir = retirer la dernière.
@@ -78,6 +81,7 @@ fun JournalNavigation(appViewModel: AppViewModel) {
                     onEdit = { push(VoyageEdit(key.id)) },
                     onAddEtape = { push(EtapeEdit(key.id)) },
                     onOpenEtape = { push(EtapeDetail(it)) },
+                    extraContent = { TrajetsSection(voyageId = key.id, onOpen = { push(TrajetDetail(it)) }) },
                 )
             }
             entry<EtapeEdit> { key ->
@@ -85,6 +89,9 @@ fun JournalNavigation(appViewModel: AppViewModel) {
             }
             entry<EtapeDetail> { key ->
                 EtapeDetailScreen(etapeId = key.id, onBack = { pop(key) })
+            }
+            entry<TrajetDetail> { key ->
+                TrajetScreen(trajetId = key.id, onBack = { pop(key) })
             }
         },
     )

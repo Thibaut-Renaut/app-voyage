@@ -99,4 +99,39 @@
     <string name="consent_refuse">Refuser</string>
     <string name="consent_menu_on">Mesure d’audience : activée (désactiver)</string>
     <string name="consent_menu_off">Mesure d’audience : désactivée (activer)</string>
+
+    <!-- v2 : l'enregistreur de trajet (la fonctionnalité native) -->
+    <string name="trajets">Trajets GPS</string>
+    <string name="trajets_intro">Enregistrez votre itinéraire : le tracé continue écran éteint, app fermée — ce que la PWA ne pouvait pas faire.</string>
+    <string name="trajet_start">Enregistrer un trajet</string>
+    <string name="trajet_in_progress">Trajet en cours d’enregistrement</string>
+    <string name="trajet_in_progress_other">Un trajet est déjà en cours dans un autre voyage.</string>
+    <string name="trajet_see">Voir</string>
+    <string name="trajet">Trajet</string>
+    <string name="trajet_title">Trajet du %s</string>
+    <string name="trajet_live">Enregistrement en cours</string>
+    <string name="trajet_finished">Trajet terminé</string>
+    <string name="trajet_interrupted">Trajet interrompu</string>
+    <string name="trajet_waiting_fix">En attente du premier relevé GPS…</string>
+    <string name="trajet_missing">Ce trajet n’existe plus.</string>
+    <string name="trajet_share_gpx">Partager le GPX</string>
+    <string name="trajet_share_title">Partager le tracé (GPX)…</string>
+    <string name="trajet_delete">Supprimer le trajet</string>
+    <string name="trajet_delete_confirm">Supprimer ce trajet et ses %d points ?</string>
+    <string name="trajet_location_rationale">Le trajet enregistre votre position toutes les quelques secondes, tant que l’enregistrement est actif — y compris écran éteint, grâce à une notification permanente que vous pouvez arrêter à tout moment. Choisissez « Position exacte » : en approximatif, le tracé serait inutilisable.</string>
+    <string name="trajet_approximate_warning">Position approximative accordée : le tracé sera très imprécis. Accordez la position exacte dans les réglages pour un vrai tracé.</string>
+    <string name="trajet_location_off">La localisation du téléphone est désactivée.</string>
+    <string name="trajet_location_settings">Activer la localisation</string>
+    <string name="trajet_no_notifications">Notifications désactivées : l’enregistrement fonctionne, mais sa notification (et son bouton Arrêter) n’apparaîtra pas dans le volet.</string>
+    <string name="stat_distance">Distance</string>
+    <string name="stat_duration">Durée</string>
+    <string name="stat_speed">Vitesse moy.</string>
+    <string name="stat_elevation">Dénivelé +</string>
+    <string name="stat_points">Points</string>
+    <string name="stat_accuracy">Précision</string>
+    <string name="tracking_notif_title">Trajet en cours d’enregistrement</string>
+    <string name="tracking_notif_text">%1$s · %2$d points</string>
+    <string name="tracking_stop">Arrêter</string>
+    <string name="channel_tracking_name">Trajet en cours</string>
+    <string name="channel_tracking_desc">La notification permanente de l’enregistrement d’un trajet GPS</string>
 </resources>

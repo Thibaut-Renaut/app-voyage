@@ -14,6 +14,7 @@ import corsica.universita.journalvoyage.data.location.LocationSource
 import corsica.universita.journalvoyage.data.remote.okHttp
 import corsica.universita.journalvoyage.data.remote.syncApi
 import corsica.universita.journalvoyage.notif.Notifications
+import corsica.universita.journalvoyage.tracking.TrackingService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
@@ -57,6 +58,9 @@ class JournalApp : Application() {
         Notifications.createChannels(this)
         JournalContainer.appScope.launch {
             JournalContainer.repository.seedIfEmpty()
+            // Un trajet resté « en cours » d'un process tué par l'OS : clos à l'heure de son dernier point.
+            val closed = JournalContainer.repository.closeOrphanTrajets(exceptId = TrackingService.activeTrajetId.value)
+            if (closed > 0) Log.w("Journal", "$closed trajet(s) interrompu(s) par la mort du process, clos")
             // Une étape restée « en attente » (worker abandonné après 5 essais) repart à chaque démarrage.
             JournalContainer.repository.enqueueSync()
         }
