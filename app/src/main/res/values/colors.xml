@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Palette de la PWA (style.css : variables green et cream), reprise dans ui/theme/Color.kt -->
+    <color name="jv_green">#4A6741</color>
+    <color name="jv_green_light">#D1DFCC</color>
+    <color name="jv_green_dark">#2D3E28</color>
+    <color name="jv_cream">#FAFAF7</color>
+    <color name="jv_ink">#1C1B18</color>
+</resources>

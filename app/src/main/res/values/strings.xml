@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Journal de Voyage</string>
+
+    <!-- Commun -->
+    <string name="back">Retour</string>
+    <string name="cancel">Annuler</string>
+    <string name="delete">Supprimer</string>
+    <string name="remove">Retirer</string>
+    <string name="save">Enregistrer</string>
+    <string name="more">Plus d’options</string>
+    <string name="share">Partager</string>
+    <string name="share_title">Partager l’étape avec…</string>
+    <string name="open_pwa">Ouvrir la PWA</string>
+
+    <!-- Voyages -->
+    <string name="new_voyage">Nouveau voyage</string>
+    <string name="edit_voyage">Modifier le voyage</string>
+    <string name="delete_voyage">Supprimer le voyage</string>
+    <string name="delete_voyage_confirm">Supprimer « %1$s » et ses %2$d étape(s), photos comprises ? Cette action est définitive.</string>
+    <string name="voyage_title">Titre du voyage</string>
+    <string name="voyage_description">Description</string>
+    <string name="cover">Photo vitrine</string>
+    <string name="choose_cover">Choisir une photo</string>
+    <string name="remove_cover">Retirer</string>
+    <string name="active_voyage">Actif</string>
+    <string name="voyages_empty">Aucun voyage pour l’instant. Créez votre premier carnet.</string>
+    <plurals name="voyages_count">
+        <item quantity="one">%d voyage</item>
+        <item quantity="other">%d voyages</item>
+    </plurals>
+
+    <!-- Étapes -->
+    <string name="etape">Étape</string>
+    <string name="new_etape">Nouvelle étape</string>
+    <string name="delete_etape">Supprimer l’étape</string>
+    <string name="delete_etape_confirm">Supprimer « %s » et ses photos ?</string>
+    <string name="etape_title">Lieu ou titre de l’étape</string>
+    <string name="etape_description">Votre récit</string>
+    <string name="etape_photo">Photo de l’étape</string>
+    <string name="etape_missing">Cette étape n’existe plus.</string>
+    <string name="etapes_empty">Aucune étape : ajoutez la première de ce voyage.</string>
+    <string name="save_etape">Enregistrer l’étape</string>
+    <string name="save_offline_hint">Enregistrée tout de suite sur le téléphone, même hors ligne ; elle partira au serveur dès que le réseau le permettra.</string>
+    <string name="photos">Photos</string>
+    <string name="take_photo">Prendre une photo</string>
+    <string name="from_gallery">Depuis la galerie</string>
+    <string name="has_location">Position enregistrée</string>
+    <string name="open_map">Voir sur la carte</string>
+    <string name="no_map_app">Aucune application de cartes installée</string>
+    <plurals name="etapes_count">
+        <item quantity="one">%d étape</item>
+        <item quantity="other">%d étapes</item>
+    </plurals>
+
+    <!-- Synchronisation -->
+    <string name="synced">Synchronisé</string>
+    <string name="pending">En attente</string>
+    <plurals name="pending_count">
+        <item quantity="one">%d en attente d’envoi</item>
+        <item quantity="other">%d en attente d’envoi</item>
+    </plurals>
+
+    <!-- Position -->
+    <string name="location">Position</string>
+    <string name="location_value">%1$.5f, %2$.5f</string>
+    <string name="location_accuracy">à %1$d m près (%2$s)</string>
+    <string name="location_precise">précise</string>
+    <string name="location_approximate">approximative</string>
+    <string name="add_location">Ma position</string>
+    <string name="location_rationale">Journal de Voyage utilise votre position pour situer l’étape sur la carte, seulement quand vous appuyez sur « Ma position ». Vous pouvez choisir une position approximative.</string>
+    <string name="camera_rationale">La caméra sert à joindre une photo à l’étape. Vous pouvez aussi choisir une photo dans la galerie, sans aucune permission.</string>
+
+    <!-- Permissions -->
+    <string name="permission_continue">Continuer</string>
+    <string name="permission_not_now">Pas maintenant</string>
+    <string name="permission_open_settings">Ouvrir les réglages</string>
+    <string name="permission_denied_forever">« %s » : permission refusée définitivement. Android n’affichera plus la demande ; vous pouvez l’accorder dans les réglages de l’app. Le reste de l’app fonctionne sans.</string>
+
+    <!-- Notifications -->
+    <string name="channel_sync_name">Synchronisation</string>
+    <string name="channel_sync_desc">Compte rendu de l’envoi des étapes au serveur</string>
+    <string name="channel_messages_name">Messages</string>
+    <string name="channel_messages_desc">Messages poussés par le serveur (Firebase Cloud Messaging)</string>
+    <string name="notif_sync_title">Étapes synchronisées</string>
+    <plurals name="notif_sync_text">
+        <item quantity="one">%d étape envoyée au serveur</item>
+        <item quantity="other">%d étapes envoyées au serveur</item>
+    </plurals>
+    <string name="notifications_off">Les notifications sont désactivées : vous ne saurez pas quand vos étapes hors ligne sont parties.</string>
+    <string name="notifications_enable">Activer les notifications</string>
+    <string name="copy_token">Copier mon jeton FCM</string>
+    <string name="token_copied">Jeton FCM copié</string>
+    <string name="token_unavailable">Jeton FCM indisponible (voir Logcat : « Jeton FCM »)</string>
+
+    <!-- Mesure d'audience (RGPD) -->
+    <string name="consent_text">Mesure d’audience : acceptez-vous que l’app compte, de façon anonyme, quelques gestes (première étape, retour dans l’app, trajets) ? Vos récits, photos et positions ne sont jamais envoyés.</string>
+    <string name="consent_accept">Accepter</string>
+    <string name="consent_refuse">Refuser</string>
+    <string name="consent_menu_on">Mesure d’audience : activée (désactiver)</string>
+    <string name="consent_menu_off">Mesure d’audience : désactivée (activer)</string>
+</resources>

@@ -1,0 +1,82 @@
+package corsica.universita.journalvoyage.data.local
+
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.Query
+import androidx.room.Transaction
+import androidx.room.Upsert
+import kotlinx.coroutines.flow.Flow
+
+/**
+ * Les accès aux tables : le SQL, vérifié à la compilation par Room.
+ * Lire : un Flow, réémis à chaque écriture dans la table. Écrire : suspend, hors du main thread.
+ */
+@Dao
+interface VoyageDao {
+    @Query(
+        "SELECT v.*, (SELECT COUNT(*) FROM etapes e WHERE e.voyageId = v.id) AS etapesCount " +
+            "FROM voyages v ORDER BY v.createdAt DESC",
+    )
+    fun all(): Flow<List<VoyageWithCount>>
+
+    @Query("SELECT * FROM voyages WHERE id = :id")
+    fun observe(id: Long): Flow<VoyageEntity?>
+
+    @Query("SELECT * FROM voyages WHERE id = :id")
+    suspend fun get(id: Long): VoyageEntity?
+
+    @Query("SELECT id FROM voyages ORDER BY createdAt DESC LIMIT 1")
+    suspend fun latestId(): Long?
+
+    @Query("SELECT COUNT(*) FROM voyages")
+    suspend fun count(): Int
+
+    @Upsert
+    suspend fun upsert(v: VoyageEntity): Long
+
+    @Delete
+    suspend fun delete(v: VoyageEntity)
+}
+
+@Dao
+interface EtapeDao {
+    @Transaction
+    @Query("SELECT * FROM etapes WHERE voyageId = :voyageId ORDER BY date DESC")
+    fun forVoyage(voyageId: Long): Flow<List<EtapeWithPhotos>>
+
+    @Transaction
+    @Query("SELECT * FROM etapes WHERE id = :id")
+    fun observe(id: Long): Flow<EtapeWithPhotos?>
+
+    @Query("SELECT * FROM etapes WHERE id = :id")
+    suspend fun get(id: Long): EtapeEntity?
+
+    @Upsert
+    suspend fun upsert(e: EtapeEntity): Long
+
+    @Delete
+    suspend fun delete(e: EtapeEntity)
+
+    @Insert
+    suspend fun insertPhotos(photos: List<PhotoEntity>)
+
+    /** Les fichiers à effacer AVANT que CASCADE n'efface les lignes qui les désignent. */
+    @Query("SELECT path FROM photos WHERE etapeId = :etapeId")
+    suspend fun photoPaths(etapeId: Long): List<String>
+
+    @Query("SELECT p.path FROM photos p JOIN etapes e ON p.etapeId = e.id WHERE e.voyageId = :voyageId")
+    suspend fun photoPathsOfVoyage(voyageId: Long): List<String>
+
+    // L'outbox, en SQL : ce que la PWA gardait dans l'object store « outbox ».
+    @Transaction
+    @Query("SELECT * FROM etapes WHERE synced = 0 ORDER BY date")
+    suspend fun unsynced(): List<EtapeWithPhotos>
+
+    @Query("UPDATE etapes SET synced = 1 WHERE id IN (:ids)")
+    suspend fun markSynced(ids: List<Long>)
+
+    /** Le badge « n en attente » : il vient de Room, pas de WorkManager. */
+    @Query("SELECT COUNT(*) FROM etapes WHERE synced = 0")
+    fun unsyncedCount(): Flow<Int>
+}

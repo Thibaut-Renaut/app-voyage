@@ -1,0 +1,21 @@
+# Gradle / Android Studio
+build/
+.gradle/
+.idea/
+.kotlin/
+*.iml
+local.properties
+/captures/
+.externalNativeBuild/
+.cxx/
+
+# Keystores : seul debug.keystore (clé debug du cours) est versionné
+*.jks
+*.keystore
+!debug.keystore
+
+# Divers
+.DS_Store
+
+# APK de démonstration (mise à jour v1 → v2), construits localement
+demo/

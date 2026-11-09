@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Permission « normale » : accordée à l'installation, sans dialogue. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Permissions « dangereuses » : déclarées ici ET demandées à l'exécution (PermissionFlow),
+         au moment où l'utilisateur fait le geste qui en a besoin, jamais au lancement. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- required="false" : l'app reste installable sur un appareil sans caméra. -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
+    <!-- Android 11+ : visibilité des paquets, pour trouver un navigateur (« Ouvrir la PWA »)
+         et une app de cartes (geo:) depuis l'app. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.APP_BROWSER" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="geo" />
+        </intent>
+    </queries>
+
+    <application
+        android:name=".JournalApp"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.JournalVoyage">
+
+        <!-- RGPD : Analytics ne collecte rien tant que l'utilisateur n'a pas accepté (Analytics.kt). -->
+        <meta-data
+            android:name="firebase_analytics_collection_enabled"
+            android:value="false" />
+        <!-- Un message « notification » de la console Firebase, reçu app en arrière-plan, est affiché
+             par la bibliothèque Firebase : sur NOTRE canal et avec NOTRE icône, pas ceux par défaut. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="messages" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
+
+        <!-- singleTop : un intent reçu alors que l'app est affichée arrive dans onNewIntent. -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.JournalVoyage">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- Cible de partage : du texte ou une photo reçus d'une autre app deviennent une nouvelle étape. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+
+            <!-- App Link : à l'installation, l'OS télécharge https://<pwaHost>/.well-known/assetlinks.json
+                 et y cherche ce package et l'empreinte de cette clé. Vérifié → l'URL de la PWA ouvre l'app. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="${pwaHost}" />
+            </intent-filter>
+        </activity>
+
+        <!-- Donner une photo (ou un GPX) à une autre app sans ouvrir tout le stockage privé. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <!-- Réception FCM. exported="false" : seul Play Services (via la lib Firebase) lui parle. -->
+        <service
+            android:name=".notif.JournalMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+    </application>
+
+</manifest>
