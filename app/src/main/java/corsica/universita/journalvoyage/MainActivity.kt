@@ -59,7 +59,7 @@ class MainActivity : ComponentActivity() {
         val source = intent.getStringExtra(Notifications.EXTRA_SOURCE)
             ?: if (intent.extras?.containsKey("google.message_id") == true) "push" else null
         if (source != null) {
-            Log.d(TAG, "Ouvert depuis une notification ($source) → étape $etapeId, voyage $voyageId — extras : ${intent.extras?.keySet()}")
+            Log.d(TAG, "Ouvert depuis une notification ($source) → étape $etapeId, voyage $voyageId — extras : ${intent.extras?.keySet()?.joinToString()}")
             JournalContainer.analytics.notificationClicked(source)
         }
         when {

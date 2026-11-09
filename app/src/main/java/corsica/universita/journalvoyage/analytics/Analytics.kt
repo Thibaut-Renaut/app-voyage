@@ -6,8 +6,8 @@ import android.util.Log
 import com.google.firebase.analytics.FirebaseAnalytics
 import corsica.universita.journalvoyage.data.local.Settings
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -25,14 +25,12 @@ import java.time.LocalDate
  * activée qu'après un « Accepter » explicite, gardé dans DataStore. Refus = rien ne part.
  * Chaque événement est aussi écrit dans Logcat (adb logcat -s Journal) : vérifiable sans console Firebase.
  */
-class Analytics(context: Context, private val settings: Settings, scope: CoroutineScope) {
+class Analytics(context: Context, private val settings: Settings, private val scope: CoroutineScope) {
     private val firebase = FirebaseAnalytics.getInstance(context)
-    private val consent = MutableStateFlow<Boolean?>(null)
 
     init {
         scope.launch {
             settings.analyticsConsent.distinctUntilChanged().collect {
-                consent.value = it
                 firebase.setAnalyticsCollectionEnabled(it == true)
                 Log.d(TAG, "Analytics : collecte ${if (it == true) "activée" else "désactivée"} (consentement = $it)")
             }
@@ -69,13 +67,23 @@ class Analytics(context: Context, private val settings: Settings, scope: Corouti
     /** reason : permission_denied, location_off, fgs_not_allowed… : un échec mesuré vaut mieux qu'un échec caché. */
     fun trajetFailed(reason: String) = log("trajet_failed", "reason" to reason)
 
+    /**
+     * Le consentement est relu dans DataStore à chaque événement, avant l'envoi : au démarrage à froid
+     * (clic sur une notification, retour dans l'app), l'événement part avant que le collecteur de init
+     * n'ait lu DataStore — sans cette lecture, notif_clicked et return_visit étaient perdus.
+     */
     private fun log(name: String, vararg params: Pair<String, Any>) {
         val bundle = Bundle().apply {
             params.forEach { (k, v) -> if (v is Long) putLong(k, v) else putString(k, v.toString()) }
         }
-        val sent = if (consent.value == true) "→ Firebase" else "(non envoyé : pas de consentement)"
-        Log.d(TAG, "Analytics : $name ${params.toMap()} $sent")
-        firebase.logEvent(name, bundle) // collecte désactivée : le SDK l'ignore
+        scope.launch {
+            val consented = settings.analyticsConsent.first() == true
+            Log.d(TAG, "Analytics : $name ${params.toMap()} ${if (consented) "→ Firebase" else "(non envoyé : pas de consentement)"}")
+            if (consented) {
+                firebase.setAnalyticsCollectionEnabled(true)
+                firebase.logEvent(name, bundle)
+            }
+        }
     }
 
     private companion object {
