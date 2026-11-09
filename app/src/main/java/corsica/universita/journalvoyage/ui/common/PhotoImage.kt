@@ -68,3 +68,25 @@ private fun decode(path: String, maxPx: Int): Bitmap? {
     }
     return Bitmap.createBitmap(raw, 0, 0, raw.width, raw.height, Matrix().apply { postRotate(degrees) }, true)
 }
+
+/** Une image des assets (les photos des « Destinations inspirantes », comme le dossier images de la PWA), décodée hors du main thread. */
+@Composable
+fun AssetImage(name: String, contentDescription: String?, modifier: Modifier = Modifier, maxPx: Int = 1080) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val key = "asset:$name@$maxPx"
+    val bitmap by produceState(initialValue = cache.get(key), key) {
+        if (value == null) {
+            value = withContext(Dispatchers.IO) {
+                val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                context.assets.open(name).use { BitmapFactory.decodeStream(it, null, bounds) }
+                var sample = 1
+                while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= maxPx) sample *= 2
+                context.assets.open(name).use { BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inSampleSize = sample }) }
+                    ?.asImageBitmap()
+            }?.also { cache.put(key, it) }
+        }
+    }
+    val b = bitmap
+    if (b != null) Image(b, contentDescription, modifier, contentScale = ContentScale.Crop)
+    else Box(modifier.background(MaterialTheme.colorScheme.primaryContainer))
+}

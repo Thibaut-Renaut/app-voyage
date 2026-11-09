@@ -17,6 +17,7 @@ import corsica.universita.journalvoyage.notif.Notifications
 import corsica.universita.journalvoyage.tracking.TrackingService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 /**
@@ -37,6 +38,9 @@ object JournalContainer {
     lateinit var analytics: Analytics
         private set
 
+    /** Un texte ou une photo reçus d'une autre app, en attente d'être versés dans le formulaire d'étape. */
+    val pendingShare = MutableStateFlow<SharedContent?>(null)
+
     /** Un scope qui vit avec le process, pour le travail lancé hors d'un écran (jeton FCM, données de démo). */
     val appScope = CoroutineScope(SupervisorJob())
 
@@ -49,6 +53,8 @@ object JournalContainer {
         repository = JournalRepository(database, syncApi(okHttp(context)), WorkManager.getInstance(context), photoStore)
     }
 }
+
+data class SharedContent(val text: String?, val imageUri: String?)
 
 /** Un objet Application par process : créé avant toute Activity, tout worker, tout service. */
 class JournalApp : Application() {

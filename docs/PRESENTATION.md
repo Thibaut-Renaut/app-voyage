@@ -6,12 +6,13 @@ Le plan suit la slide 8 du TP : **la démo, l'architecture, les choix, le natif,
 
 ## 1. La démo (5 minutes, dans cet ordre)
 
-1. **Lancement.** Splash, puis l'accueil : le carnet « Échappée en Corse » et ses 3 étapes, les mêmes données de démonstration que la PWA. Le bandeau de consentement : *Accepter*.
-2. **Mode avion → nouvelle étape.** Titre, récit, *Ma position* (dialogue de permission, « pendant l'utilisation »), *Prendre une photo* (CameraX), *Enregistrer*. L'étape apparaît tout de suite avec le badge ambre « En attente », et l'accueil affiche « 1 en attente d'envoi ».
-3. **Fermer l'app** (la balayer des récents), **couper le mode avion.** Sans rouvrir l'app : la notification « Étapes synchronisées » arrive. On rouvre : badge vert « Synchronisé ».
-4. **Le natif.** Dans le voyage : *Enregistrer un trajet*. Marcher (ou rejouer un itinéraire dans l'émulateur : *Extended controls › Location › Routes*). Le tracé se dessine en direct. **Éteindre l'écran, balayer l'app des récents**, marcher encore. Rallumer : la notification « Trajet en cours » a son chronomètre et ses points. *Arrêter* depuis la notification. Rouvrir : le trajet terminé, ses stats, *Partager le GPX*.
-5. **Le lien.** Ouvrir `https://journalvoyage.netlify.app/` depuis une autre app (Messages, Notes) : c'est l'app qui s'ouvre, pas Chrome.
-6. **Analytics.** La console Firebase › *DebugView* : `first_etape_created`, `trajet_started`, `trajet_completed` apparaissent en direct. Sans Firebase : `adb logcat -s Journal` montre chaque événement.
+1. **Lancement — la même page que la PWA.** Splash, puis l'accueil : « Votre Journal, *de Voyage.* », « Nouvelle étape de *Échappée en Corse* », l'itinéraire numéroté (Bavella, Piana, Palombaggia), « Mes carnets de voyage », « Destinations inspirantes ». Mêmes textes, mêmes polices (Fraunces, Plus Jakarta Sans), mêmes couleurs. Le bandeau de consentement : *Accepter*. Montrer la PWA à côté, dans Chrome.
+2. **Les carnets.** *Changer de voyage* → *Créer un nouveau voyage* → il devient le carnet actif (toast « Nouveau carnet … créé ! »). *Modifier le carnet*, puis supprimer un carnet (confirmation) ; essayer de supprimer le dernier : « Impossible de supprimer le seul carnet existant. »
+3. **Mode avion → nouvelle étape.** La pastille « Mode hors ligne » apparaît en haut. Titre, récit, *Ma position* (dialogue de permission, « pendant l'utilisation »), *Prendre une photo* (CameraX), *Enregistrer cette étape →*. Toast « Étape enregistrée hors ligne — synchronisation différée », pastille ambre « En attente de sync ».
+4. **Fermer l'app** (la balayer des récents), **couper le mode avion.** Sans rouvrir l'app : la notification « Étapes synchronisées » arrive. On rouvre : « ✓ Synchronisé ».
+5. **Le natif.** Section « Trajets GPS » (sous l'itinéraire) : *Enregistrer un trajet*. Marcher (ou rejouer un itinéraire dans l'émulateur : *Extended controls › Location › Routes*). Le tracé se dessine en direct. **Éteindre l'écran, balayer l'app des récents**, marcher encore. Rallumer : la notification « Trajet en cours » a son chronomètre et ses points. *Arrêter* depuis la notification. Rouvrir : le trajet terminé, ses stats, *Partager le GPX*.
+6. **Le lien.** Ouvrir `https://journalvoyage.netlify.app/` depuis une autre app (Messages, Notes) : c'est l'app qui s'ouvre, pas Chrome.
+7. **Analytics.** La console Firebase › *DebugView* : `first_etape_created`, `trajet_started`, `trajet_completed` apparaissent en direct. Sans Firebase : `adb logcat -s Journal` montre chaque événement.
 
 ## 2. L'architecture : d'où viennent les données
 
@@ -25,7 +26,11 @@ La correspondance avec la PWA :
 
 | Dans la PWA | Dans l'app | Fichier |
 |---|---|---|
-| HTML + JS, `renderJournal()` | Compose + ViewModel | `ui/…` |
+| La page unique `index.html` + `app.js` | `HomeScreen` (une `LazyColumn`, mêmes sections dans le même ordre) + `HomeViewModel` | `ui/home/` |
+| Les classes CSS (`.btn--primary`, `.form__input`, `.journal-entry__dot`…) | un composable par classe, mêmes couleurs, rayons et polices | `ui/common/Pwa.kt`, `ui/theme/` |
+| Les modales (créer, modifier, supprimer, changer de carnet) | `Dialog` Compose ; la fenêtre ouverte est dans le `SavedStateHandle` (survit à la rotation) | `ui/home/VoyageDialogs.kt` |
+| `showToast()`, `showNetworkStatus()` (événements `online`/`offline`) | toasts via un `Channel` ; `ConnectivityManager.NetworkCallback` | `HomeScreen.kt`, `data/NetworkMonitor.kt` |
+| `renderJournal()` | Compose + ViewModel | `ui/home/HomeSections.kt` |
 | IndexedDB `voyages`, `etapes` | Room : tables `voyages`, `etapes`, `photos` | `data/local/Entities.kt` |
 | object store `outbox` | colonne `etapes.synced` (0 = à envoyer) | `Daos.kt` (`unsynced()`) |
 | Background Sync + événement `online` | WorkManager : travail unique, contrainte réseau | `JournalRepository.enqueueSync()`, `SyncWorker` |
@@ -74,7 +79,7 @@ La correspondance avec la PWA :
 - `START_NOT_STICKY` : si l'OS tue le process, on ne relance pas un enregistrement dans le dos de l'utilisateur. Au démarrage suivant, le trajet resté « en cours » est clos à l'heure de son dernier point (`closeOrphanTrajets`).
 - Export **GPX 1.1** (Strava, Komoot, OsmAnd) via `FileProvider`.
 
-**Prouvé sur l'émulateur** (captures 06 à 13) : 19 points enregistrés app balayée des récents, écran éteint et en Doze forcé (`deviceidle force-idle`) ; arrêt depuis la notification app fermée ; rotation pendant l'enregistrement ; process tué en plein trajet, trajet clos au redémarrage.
+**Prouvé sur l'émulateur** (captures 06, 07, 09, 10, 13) : 19 points enregistrés app balayée des récents, écran éteint et en Doze forcé (`deviceidle force-idle`) ; arrêt depuis la notification app fermée ; rotation pendant l'enregistrement ; process tué en plein trajet, trajet clos au redémarrage.
 
 **Le risque pris.** C'est la fonctionnalité qui négocie le plus avec l'OS : permission, type de service, Doze, mort du process, notification.
 
@@ -90,20 +95,23 @@ La correspondance avec la PWA :
 | Dénivelé de 4 m sur une montée simulée de 40 m | L'émulateur bloque l'altitude à 7,5 m quoi qu'envoie `geo fix`. L'app enregistre ce qu'elle reçoit (vérifié dans le GPX). | Limite de l'émulateur. Le calcul est couvert par `TrackMathTest` (seuil de 3 m contre le bruit GPS). À montrer sur un vrai téléphone. |
 | Push ouvert sur l'accueil et non sur l'étape | Le message de test avait été envoyé sans la donnée personnalisée `etapeId`. | Renvoyé avec `etapeId` = 4 → l'étape s'ouvre. `MainActivity` logue désormais les clés reçues (`extras : [...]`) pour le voir tout de suite. |
 | Position lente sur le téléphone (≈ 30 s, à 100 m près) | En intérieur et en mode avion : pas de Wi-Fi ni d'antenne pour aider le GPS. | L'indicateur de chargement l'affiche ; en démo, se placer près d'une fenêtre. |
+| **Le front ne ressemblait pas à la PWA** (1ʳᵉ version : liste de carnets → écran voyage → écran formulaire, style Material par défaut) | J'avais porté les données et les mécanismes, pas l'interface. Manquaient aussi : « Changer de voyage », les règles (dernier carnet, description obligatoire), les toasts, l'indicateur réseau, les destinations. | Refonte : `HomeScreen` reprend `index.html` section par section, un composable par classe CSS, les polices de la PWA embarquées (`res/font`), ses textes mot pour mot. |
+| Les champs d'une fenêtre restaient vides malgré la saisie (même au clavier) | Pour vider un brouillon j'appelais `SavedStateHandle.remove(clé)` : cela **détache** le `StateFlow` rendu par `getStateFlow()`, les saisies suivantes n'étaient plus émises. | Remettre la valeur par défaut (`saved[clé] = ""`), jamais `remove()`. Commenté dans `HomeViewModel`. |
+| Pastille « Connexion rétablie » alors que la synchro ne partait pas (émulateur) | Le Wi-Fi avait `INTERNET` mais pas `VALIDATED` ; WorkManager exige un réseau validé, mon indicateur non. | L'indicateur exige aussi `VALIDATED` (et écoute `onCapabilitiesChanged`) : il dit la même chose que WorkManager. |
 | Vitesse moyenne de 20 à 44 km/h « en marchant » | La marche simulée envoie un point toutes les 2,5 s, espacés de ~50 m. | Normal en simulation ; réaliste sur le terrain. |
 
 ## Checklist de la slide 9, et sa preuve
 
 | Point | Comment le prouver | État (émulateur, 9 nov.) |
 |---|---|---|
-| Mode avion : l'app s'ouvre, affiche ses données, dit ce qui est indisponible | `adb shell cmd connectivity airplane-mode enable`, puis étape → badge « En attente » | ✅ capture 05 |
+| Mode avion : l'app s'ouvre, affiche ses données, dit ce qui est indisponible | `adb shell cmd connectivity airplane-mode enable`, puis étape → badge « En attente » | ✅ capture 22 |
 | Retour du réseau : l'action hors ligne part seule | App tuée (`am kill`), `airplane-mode disable`, puis `adb logcat -s Journal` : `SyncWorker … 1 étape(s) envoyée(s)`, nouveau PID | ✅ |
 | Mise à jour par-dessus l'ancienne version | `adb install -r demo/journal-v1.0.apk`, créer des données, puis `adb install -r` de la 2.0 : les 4 étapes sont là ; `connectedDebugAndroidTest` | ✅ |
 | Rotation, mort du process : rien ne se perd | Formulaire rempli + photo → Home → `adb shell am kill …` → retour : tout est là. Rotation pendant un trajet. | ✅ |
 | Notification reçue app tuée ; le clic ouvre le bon écran | Console Firebase › Messaging › « Envoyer un message de test » (jeton : menu ⋮ › *Copier mon jeton FCM*), données personnalisées `etapeId` = 4. Sans Firebase : `adb shell am start -n corsica.universita.journalvoyage/.MainActivity --es etapeId 4 --es google.message_id test` | ✅ sur le Galaxy S21 (Android 15) : message de test reçu app tuée, clic → l'app s'ouvre (`notif_clicked`) ; avec `etapeId` = 4 → l'étape 4 |
-| Permission refusée deux fois : réglages proposés, l'app marche sans | `pm revoke` des deux localisations, refuser, explication, refuser → « Ouvrir les réglages » | ✅ captures 11, 12 |
+| Permission refusée deux fois : réglages proposés, l'app marche sans | `pm revoke` des deux localisations, refuser, explication, refuser → « Ouvrir les réglages » | ✅ |
 | App Link : `pm get-app-links` → verified | `adb shell pm verify-app-links --re-verify corsica.universita.journalvoyage` puis `adb shell pm get-app-links corsica.universita.journalvoyage` | ✅ `verified` ; `am start -a VIEW -d https://journalvoyage.netlify.app/` ouvre l'app |
-| Fonctionnalité native démontrable | Trajet écran éteint, app balayée, Doze ; arrêt depuis la notification | ✅ captures 06–09 |
+| Fonctionnalité native démontrable | Trajet écran éteint, app balayée, Doze ; arrêt depuis la notification | ✅ captures 06, 07, 09 |
 | Analytics : les trois événements en direct | `adb shell setprop debug.firebase.analytics.app corsica.universita.journalvoyage`, puis Firebase › DebugView. Sans Firebase : `adb logcat -s Journal \| grep Analytics` | ✅ `first_etape_created`, `trajet_started`, `trajet_completed` envoyés (FA-SVC : `Successful upload … 204`) ; rien avant « Accepter » |
 | Dépôt Git poussé, README à jour | | dépôt local prêt, à pousser |
 

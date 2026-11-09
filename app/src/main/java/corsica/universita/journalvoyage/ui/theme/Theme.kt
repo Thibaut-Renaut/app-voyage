@@ -1,19 +1,25 @@
 package corsica.universita.journalvoyage.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 
-private val LightColors = lightColorScheme(
+// --radius-sm / md / lg de la PWA
+val RadiusSm = RoundedCornerShape(8.dp)
+val RadiusMd = RoundedCornerShape(14.dp)
+val RadiusLg = RoundedCornerShape(20.dp)
+
+private val Colors = lightColorScheme(
     primary = Green600,
-    onPrimary = Cream50,
-    primaryContainer = Green200,
-    onPrimaryContainer = Green900,
+    onPrimary = Color.White,
+    primaryContainer = Green100,
+    onPrimaryContainer = Green800,
     secondary = Green500,
-    onSecondary = Cream50,
+    onSecondary = Color.White,
     secondaryContainer = Green50,
     onSecondaryContainer = Green900,
     background = Cream50,
@@ -22,8 +28,9 @@ private val LightColors = lightColorScheme(
     onSurface = Gray900,
     surfaceVariant = Cream100,
     onSurfaceVariant = Gray500,
+    outline = Gray300,
     outlineVariant = Gray200,
-    // Les cartes Material 3 prennent surfaceContainerHighest : blanches, comme les cartes de la PWA.
+    error = Danger,
     surfaceContainerLowest = Color.White,
     surfaceContainerLow = Color.White,
     surfaceContainer = Cream100,
@@ -31,27 +38,16 @@ private val LightColors = lightColorScheme(
     surfaceContainerHighest = Color.White,
 )
 
-private val DarkColors = darkColorScheme(
-    primary = Green300,
-    onPrimary = Green900,
-    primaryContainer = Green800,
-    onPrimaryContainer = Green50,
-    secondary = Green200,
-    onSecondary = Green900,
-    secondaryContainer = Green800,
-    onSecondaryContainer = Green50,
-    background = Green900,
-    onBackground = Cream50,
-    surface = Green900,
-    onSurface = Cream50,
-    surfaceContainerHighest = Green800,
-    surfaceContainerHigh = Green800,
-    surfaceContainer = Green800,
-)
-
-/** Thème Material 3 aux couleurs de la PWA : mode sombre suivi automatiquement. */
+/**
+ * Le thème de la PWA : ses couleurs, ses rayons, ses polices. Clair seulement, comme la PWA
+ * (qui n'a pas de mode sombre) : même rendu sur le téléphone que dans le navigateur.
+ */
 @Composable
 fun JournalTheme(content: @Composable () -> Unit) {
-    val colors = if (isSystemInDarkTheme()) DarkColors else LightColors
-    MaterialTheme(colorScheme = colors, typography = JournalTypography, content = content)
+    MaterialTheme(
+        colorScheme = Colors,
+        typography = JournalTypography,
+        shapes = Shapes(small = RadiusSm, medium = RadiusMd, large = RadiusLg),
+        content = content,
+    )
 }

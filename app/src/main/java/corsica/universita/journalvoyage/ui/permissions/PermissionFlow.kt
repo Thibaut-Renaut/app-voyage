@@ -183,3 +183,55 @@ private fun ButtonContent(icon: ImageVector, label: String) {
     Icon(icon, contentDescription = null)
     Text(label, Modifier.padding(start = 8.dp))
 }
+
+/**
+ * La même machine à états que PermissionAction, sans imposer de bouton : l'écran garde ses boutons
+ * au style de la PWA et appelle `gate { action }`. Selon l'état : l'action, le dialogue système,
+ * l'explication d'abord (après un refus), ou les réglages (après le refus définitif).
+ */
+class PermissionGate internal constructor(private val run: (onGranted: () -> Unit) -> Unit) {
+    operator fun invoke(onGranted: () -> Unit) = run(onGranted)
+}
+
+@Composable
+fun rememberPermissionGate(flow: PermissionFlow, label: String, rationale: String, onDenied: () -> Unit = {}): PermissionGate {
+    var showRationale by rememberSaveable { mutableStateOf(false) }
+    var showSettings by rememberSaveable { mutableStateOf(false) }
+    var pending by remember { mutableStateOf<(() -> Unit)?>(null) }
+
+    if (showRationale) {
+        AlertDialog(
+            onDismissRequest = { showRationale = false },
+            title = { Text(label) },
+            text = { Text(rationale) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showRationale = false
+                    flow.request(pending ?: {}, onDenied)
+                }) { Text(stringResource(R.string.permission_continue)) }
+            },
+            dismissButton = { TextButton(onClick = { showRationale = false }) { Text(stringResource(R.string.permission_not_now)) } },
+        )
+    }
+    if (showSettings) {
+        AlertDialog(
+            onDismissRequest = { showSettings = false },
+            title = { Text(label) },
+            text = { Text(stringResource(R.string.permission_denied_forever, label)) },
+            confirmButton = {
+                TextButton(onClick = { showSettings = false; flow.openSettings() }) { Text(stringResource(R.string.permission_open_settings)) }
+            },
+            dismissButton = { TextButton(onClick = { showSettings = false }) { Text(stringResource(R.string.cancel)) } },
+        )
+    }
+    return remember(flow) {
+        PermissionGate { onGranted ->
+            when (flow.state) {
+                PermissionState.Granted -> onGranted()
+                PermissionState.NotAsked -> flow.request(onGranted, onDenied)
+                PermissionState.DeniedOnce -> { pending = onGranted; showRationale = true }
+                PermissionState.DeniedForever -> showSettings = true
+            }
+        }
+    }
+}

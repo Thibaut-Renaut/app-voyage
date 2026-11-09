@@ -100,10 +100,6 @@ fun TrajetsSection(voyageId: Long, onOpen: (Long) -> Unit) {
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Icon(Icons.Default.Route, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-            Text(stringResource(R.string.trajets), style = MaterialTheme.typography.titleMedium)
-        }
         Text(stringResource(R.string.trajets_intro), style = MaterialTheme.typography.bodySmall)
 
         val activeId = active

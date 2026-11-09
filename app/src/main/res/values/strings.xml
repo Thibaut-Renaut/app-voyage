@@ -44,7 +44,7 @@
     <string name="save_offline_hint">Enregistrée tout de suite sur le téléphone, même hors ligne ; elle partira au serveur dès que le réseau le permettra.</string>
     <string name="photos">Photos</string>
     <string name="take_photo">Prendre une photo</string>
-    <string name="from_gallery">Depuis la galerie</string>
+    <string name="from_gallery">Choisir dans la galerie</string>
     <string name="has_location">Position enregistrée</string>
     <string name="open_map">Voir sur la carte</string>
     <string name="no_map_app">Aucune application de cartes installée</string>
@@ -134,4 +134,86 @@
     <string name="tracking_stop">Arrêter</string>
     <string name="channel_tracking_name">Trajet en cours</string>
     <string name="channel_tracking_desc">La notification permanente de l’enregistrement d’un trajet GPS</string>
+
+    <!-- La page d'accueil : les textes de la PWA (index.html), mot pour mot -->
+    <string name="header_badge">Carnet d’aventures</string>
+    <string name="header_title_1">Votre Journal,</string>
+    <string name="header_title_2">de Voyage.</string>
+    <string name="header_subtitle">Enregistrez chaque étape de vos escapades, capturez vos photos et gardez vos coordonnées GPS, même sans réseau.</string>
+    <string name="form_label">Étape en cours</string>
+    <string name="form_title_prefix">Nouvelle étape de</string>
+    <string name="edit_active_voyage">Modifier le carnet</string>
+    <string name="switch_voyage">Changer de voyage</string>
+    <string name="new_carnet">Nouveau carnet</string>
+    <string name="etape_title_label">Titre de l’étape</string>
+    <string name="etape_title_placeholder">Ex : Coucher de soleil aux Calanques</string>
+    <string name="etape_description_label">Récit &amp; Notes</string>
+    <string name="etape_description_placeholder">Racontez vos souvenirs, impressions, anecdotes…</string>
+    <string name="etape_photos_label">Photos de l’étape</string>
+    <string name="photos_hint">Prenez une photo en direct ou sélectionnez-en plusieurs depuis votre galerie</string>
+    <string name="gps_label">Coordonnées GPS</string>
+    <string name="latitude">Latitude</string>
+    <string name="longitude">Longitude</string>
+    <string name="geo_searching">Recherche de votre position GPS...</string>
+    <string name="geo_found">Position trouvée : %1$s (à %2$d m près, %3$s)</string>
+    <string name="geo_unavailable">Position indisponible. Vérifiez que le GPS est activé.</string>
+    <string name="save_etape_arrow">Enregistrer cette étape →</string>
+    <string name="journal_label">Itinéraire du voyage actif</string>
+    <string name="journal_title">Étapes du voyage</string>
+    <string name="journal_empty">Aucune étape enregistrée pour ce carnet.
+Ajoutez votre première aventure ci-dessus !</string>
+    <string name="pending_sync">En attente de sync</string>
+    <string name="trajets_label">Exclusivité Android</string>
+    <string name="voyages_label">Collection de carnets</string>
+    <string name="voyages_title">Mes carnets de voyage</string>
+    <string name="create_carnet">Créer un carnet</string>
+    <string name="carnet_active">Carnet actif</string>
+    <string name="carnet_open">Ouvrir ce carnet</string>
+    <string name="carnet_open_current">Carnet ouvert</string>
+    <string name="carnet_placeholder">Carnet de voyage</string>
+    <string name="edit">Modifier</string>
+    <string name="destinations_label">Inspirations</string>
+    <string name="destinations_title">Destinations inspirantes</string>
+    <string name="footer_meta">Application Android · M2 Informatique · Università di Corsica · 2026</string>
+
+    <!-- Les modales de la PWA -->
+    <string name="modal_create_badge">Nouveau carnet</string>
+    <string name="modal_create_title">Créer un voyage</string>
+    <string name="modal_create_subtitle">Donnez un titre, une description et une photo vitrine à votre carnet d’aventures.</string>
+    <string name="modal_create_submit">Créer ce carnet →</string>
+    <string name="modal_edit_badge">Édition</string>
+    <string name="modal_edit_title">Modifier le carnet</string>
+    <string name="modal_edit_subtitle">Mettez à jour le titre, la description ou la photo vitrine de ce carnet.</string>
+    <string name="modal_edit_submit">Enregistrer les modifications →</string>
+    <string name="voyage_title_placeholder">Ex : Trek des Dolomites, Escapade en Grèce…</string>
+    <string name="voyage_title_placeholder_edit">Ex : Échappée en Corse</string>
+    <string name="voyage_description_placeholder">Ex : Itinéraire de 10 jours entre sommets et vallées…</string>
+    <string name="voyage_description_placeholder_edit">Description de cette aventure…</string>
+    <string name="cover_choose">Choisir une photo de couverture</string>
+    <string name="cover_change">Changer la photo de couverture</string>
+    <string name="cover_hint">Sera affichée sur la carte du voyage</string>
+    <string name="cover_hint_edit">Optionnelle — sera remplacée par une icône de voyage si absente</string>
+    <string name="cover_remove">Supprimer la photo de couverture</string>
+    <string name="delete_this_carnet">Supprimer ce carnet</string>
+    <string name="modal_delete_badge">Suppression</string>
+    <string name="modal_delete_title">Supprimer ce carnet ?</string>
+    <string name="modal_delete_text">Êtes-vous sûr de vouloir supprimer le carnet « %s » ? Toutes les étapes et photos associées seront définitivement supprimées.</string>
+    <string name="modal_delete_confirm">Supprimer définitivement</string>
+    <string name="modal_switch_badge">Vos aventures</string>
+    <string name="modal_switch_title">Sélectionner un carnet</string>
+    <string name="modal_switch_subtitle">Choisissez le voyage sur lequel vous souhaitez enregistrer vos étapes.</string>
+    <string name="switch_create_new">Créer un nouveau voyage</string>
+
+    <!-- Les toasts et l'indicateur réseau de la PWA -->
+    <string name="toast_active_voyage">Carnet actif : %s</string>
+    <string name="toast_voyage_created">Nouveau carnet « %s » créé !</string>
+    <string name="toast_voyage_updated">Carnet « %s » mis à jour !</string>
+    <string name="toast_voyage_deleted">Carnet « %s » supprimé.</string>
+    <string name="toast_cannot_delete_last">Impossible de supprimer le seul carnet existant.</string>
+    <string name="toast_etape_saved">Étape enregistrée — synchronisation en cours</string>
+    <string name="toast_etape_offline">Étape enregistrée hors ligne — synchronisation différée</string>
+    <string name="toast_etape_deleted">Étape supprimée</string>
+    <string name="toast_share_received">Contenu partagé ajouté au formulaire de « %s »</string>
+    <string name="network_offline">Mode hors ligne — actions synchronisées au retour</string>
+    <string name="network_online">Connexion rétablie</string>
 </resources>

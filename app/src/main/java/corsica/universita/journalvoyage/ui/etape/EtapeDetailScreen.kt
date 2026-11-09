@@ -48,7 +48,7 @@ import corsica.universita.journalvoyage.data.toDateTime
 import corsica.universita.journalvoyage.ui.common.PhotoImage
 import corsica.universita.journalvoyage.ui.common.openMap
 import corsica.universita.journalvoyage.ui.common.shareEtape
-import corsica.universita.journalvoyage.ui.voyage.SyncBadge
+import corsica.universita.journalvoyage.ui.home.SyncPill
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -121,7 +121,7 @@ fun EtapeDetailScreen(etapeId: Long, onBack: () -> Unit) {
             }
             Text(e.titre, style = MaterialTheme.typography.headlineSmall)
             Text(e.date.toDateTime(), style = MaterialTheme.typography.bodyMedium)
-            SyncBadge(e.synced)
+            SyncPill(e.synced)
             Text(e.description, style = MaterialTheme.typography.bodyLarge)
             if (e.lat != null && e.lng != null) {
                 Text(stringResource(R.string.location_value, e.lat, e.lng), style = MaterialTheme.typography.bodyMedium)

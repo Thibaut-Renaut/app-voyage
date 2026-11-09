@@ -2,7 +2,7 @@
 
 Portage natif (Kotlin + Jetpack Compose) de la PWA **Journal de Voyage** ([journalvoyage.netlify.app](https://journalvoyage.netlify.app/)), réalisé pour le TP Android du 9 novembre 2026 (M2 Informatique, Università di Corsica).
 
-Mêmes écrans et mêmes données que la PWA (carnets de voyage, étapes avec récit, position et photos, hors ligne d'abord, synchronisation différée), plus :
+**Le même front et les mêmes fonctionnalités que la PWA** : la même page (en-tête, « Nouvelle étape de … », itinéraire numéroté, « Mes carnets de voyage », « Destinations inspirantes »), les mêmes fenêtres (créer, modifier, supprimer, changer de carnet), les mêmes textes, polices et couleurs, les mêmes données (carnets, étapes avec récit, position et photos, hors ligne d'abord, synchronisation différée). Plus :
 
 - **une fonctionnalité impossible en PWA** : l'**enregistreur de trajet GPS**, un *foreground service* qui continue de tracer l'itinéraire écran éteint, app fermée et téléphone en Doze ;
 - **la mesure** : trois événements Firebase Analytics, après consentement (RGPD).
@@ -85,7 +85,11 @@ app/src/main/java/corsica/universita/journalvoyage/
   work/SyncWorker.kt       l'outbox
   notif/                   canaux, notifications, service FCM
   analytics/Analytics.kt   les trois événements, le consentement
-  ui/                      navigation, écrans (voyages, voyage, étape, trajet), permissions
+  ui/home/                 la page unique de la PWA : HomeScreen, ses sections, ses fenêtres, HomeViewModel
+  ui/common/Pwa.kt         un composable par classe CSS de la PWA (boutons, champs, modales, pastilles)
+  ui/theme/                couleurs, rayons et polices de la PWA (Fraunces, Plus Jakarta Sans : res/font, licence OFL)
+  ui/etape/, ui/trajet/    les écrans natifs : détail d'une étape (partage, carte), trajet GPS
+  ui/permissions/          PermissionFlow : la permission jusqu'au refus définitif
 app/schemas/               le schéma Room de chaque version (1.json, 2.json)
 app/src/test/              TrackMathTest (JVM)
 app/src/androidTest/       MigrationTest (appareil)

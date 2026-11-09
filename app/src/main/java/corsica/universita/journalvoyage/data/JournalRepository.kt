@@ -51,7 +51,7 @@ class JournalRepository(
 
     suspend fun getVoyage(id: Long): Voyage? = voyageDao.get(id)?.toVoyage()
 
-    suspend fun latestVoyageId(): Long? = voyageDao.latestId()
+    suspend fun firstVoyageId(): Long? = voyageDao.firstId()
 
     /** id = 0 : nouveau voyage ; sinon mise à jour. L'ancienne photo vitrine remplacée est effacée du disque. */
     suspend fun saveVoyage(id: Long, titre: String, description: String, coverPath: String?): Long {
@@ -132,38 +132,32 @@ class JournalRepository(
 
     // ---- Premier lancement : les mêmes données de démonstration que la PWA ----
 
-    /** initVoyages() + hydrateDestinations() de la PWA : un voyage et trois étapes, déjà « synchronisées ». */
+    /**
+     * initVoyages() + hydrateDestinations() de la PWA, à l'identique : le carnet « Échappée en Corse »
+     * (photo vitrine Bavella) et les trois étapes de l'itinéraire de démonstration, sans photo ni position,
+     * déjà « Synchronisées ». Dans l'ordre de la PWA : Bavella (1), Piana (2), Palombaggia (3).
+     */
     suspend fun seedIfEmpty() {
         if (voyageDao.count() > 0) return
         Log.d(TAG, "Premier lancement : voyage de démonstration")
         val cover = photoStore.fromAsset("seed/bavella.jpg")
-        val seeds = listOf(
-            Triple("Aiguilles de Bavella", "Randonnée spectaculaire à travers les aiguilles de granite rouge. Un panorama à couper le souffle sur les montagnes corses et la mer Tyrrhénienne.", "seed/bavella.jpg"),
-            Triple("Calanques de Piana", "Classées au patrimoine mondial de l'UNESCO, ces formations rocheuses de granit rose plongent dans une mer turquoise. Un spectacle naturel unique en Méditerranée.", "seed/piana.jpg"),
-            Triple("Plage de Palombaggia", "Sable fin, eaux cristallines et pins parasols : l'une des plus belles plages de France. Idéale pour une journée de détente entre deux randonnées.", "seed/palombaggia.jpg"),
-        )
-        val coords = listOf(41.7957 to 9.2259, 42.2386 to 8.6464, 41.5594 to 9.3247)
-        val photos = seeds.map { photoStore.fromAsset(it.third) }
+        val now = System.currentTimeMillis()
         db.withTransaction {
             val voyageId = voyageDao.upsert(
                 VoyageEntity(
                     titre = "Échappée en Corse",
                     description = "Aventures et randonnées au cœur des paysages corses, entre mer et montagnes.",
-                    coverPath = cover, createdAt = System.currentTimeMillis(),
+                    coverPath = cover, createdAt = now,
                 ),
             )
-            val now = System.currentTimeMillis()
-            seeds.forEachIndexed { i, (titre, desc, _) ->
-                val id = etapeDao.upsert(
-                    EtapeEntity(
-                        voyageId = voyageId, titre = titre, description = desc, date = now - (2 - i) * 86_400_000L,
-                        lat = coords[i].first, lng = coords[i].second, synced = true,
-                    ),
-                )
-                etapeDao.insertPhotos(listOf(PhotoEntity(etapeId = id, path = photos[i])))
+            Destinations.all.forEachIndexed { i, d ->
+                // Tri par date décroissante : la première de la liste doit être la plus récente.
+                etapeDao.upsert(EtapeEntity(voyageId = voyageId, titre = d.etapeTitre, description = d.description, date = now - i, synced = true))
             }
         }
     }
+
+    suspend fun voyageCount(): Int = voyageDao.count()
 
     // ---- L'outbox ----
 

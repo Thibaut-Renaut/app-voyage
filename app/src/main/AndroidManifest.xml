@@ -3,6 +3,8 @@
 
     <!-- Permission « normale » : accordée à l'installation, sans dialogue. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- L’indicateur réseau (« Mode hors ligne » / « Connexion rétablie ») : permission normale. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!-- Permissions « dangereuses » : déclarées ici ET demandées à l'exécution (PermissionFlow),
          au moment où l'utilisateur fait le geste qui en a besoin, jamais au lancement. -->

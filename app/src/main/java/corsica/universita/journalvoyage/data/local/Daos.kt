@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.Flow
 interface VoyageDao {
     @Query(
         "SELECT v.*, (SELECT COUNT(*) FROM etapes e WHERE e.voyageId = v.id) AS etapesCount " +
-            "FROM voyages v ORDER BY v.createdAt DESC",
+            "FROM voyages v ORDER BY v.createdAt, v.id", // l'ordre de création, comme db.getAll("voyages") de la PWA
     )
     fun all(): Flow<List<VoyageWithCount>>
 
@@ -26,8 +26,8 @@ interface VoyageDao {
     @Query("SELECT * FROM voyages WHERE id = :id")
     suspend fun get(id: Long): VoyageEntity?
 
-    @Query("SELECT id FROM voyages ORDER BY createdAt DESC LIMIT 1")
-    suspend fun latestId(): Long?
+    @Query("SELECT id FROM voyages ORDER BY createdAt, id LIMIT 1")
+    suspend fun firstId(): Long?
 
     @Query("SELECT COUNT(*) FROM voyages")
     suspend fun count(): Int
