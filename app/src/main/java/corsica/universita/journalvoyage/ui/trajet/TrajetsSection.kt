@@ -157,7 +157,9 @@ private fun TrajetRow(t: Trajet, live: Boolean, onClick: () -> Unit) {
                 tint = if (live) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
             )
             Column(Modifier.weight(1f)) {
-                Text(t.startedAt.toDateTime(), style = MaterialTheme.typography.titleSmall)
+                // Le nom donné par l'utilisateur, sinon la date ; la date reste visible en dessous.
+                Text(t.nom ?: stringResource(R.string.trajet_title, t.startedAt.toDateTime()), style = MaterialTheme.typography.titleSmall)
+                if (t.nom != null) Text(t.startedAt.toDateTime(), style = MaterialTheme.typography.bodySmall)
                 val duration = (t.endedAt ?: System.currentTimeMillis()) - t.startedAt
                 Text(
                     "${TrackMath.formatDistance(t.distanceM)} · ${TrackMath.formatDuration(duration)} · ${t.pointsCount} pts",

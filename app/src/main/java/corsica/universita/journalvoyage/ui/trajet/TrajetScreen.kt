@@ -1,6 +1,23 @@
 package corsica.universita.journalvoyage.ui.trajet
 
 import android.content.Context
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.runtime.remember
+import androidx.compose.ui.text.style.TextOverflow
+import corsica.universita.journalvoyage.data.Etape
+import corsica.universita.journalvoyage.ui.common.FieldLabel
+import corsica.universita.journalvoyage.ui.common.FormField
+import corsica.universita.journalvoyage.ui.common.ModalCard
+import corsica.universita.journalvoyage.ui.common.PrimaryButton
+import corsica.universita.journalvoyage.ui.common.SmallButton
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import android.content.Intent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -91,11 +108,37 @@ class TrajetViewModel(private val trajetId: Long) : ViewModel() {
 
     data class Loaded(val trajet: Trajet?)
 
+    /** Les étapes du voyage du trajet : pour composer un nom « De <étape> à <étape> ». */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val etapes: StateFlow<List<Etape>> = repository.observeTrajet(trajetId)
+        .flatMapLatest { t -> if (t == null) flowOf(emptyList()) else repository.etapes(t.voyageId) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    fun rename(nom: String) {
+        viewModelScope.launch { repository.renameTrajet(trajetId, nom) }
+    }
+
+    private fun displayName(context: Context, t: Trajet) = t.nom ?: context.getString(R.string.trajet_title, t.startedAt.toDateTime())
+
+    private suspend fun gpx(context: Context, t: Trajet): String = TrackMath.toGpx(displayName(context, t), repository.trackPointsOnce(trajetId))
+
+    /** « Enregistrer le GPX » : écrit là où l'utilisateur l'a choisi (Téléchargements, Drive…), via le sélecteur du système. */
+    fun saveGpx(context: Context, uri: android.net.Uri) {
+        viewModelScope.launch {
+            val t = trajet.value?.trajet ?: return@launch
+            val text = gpx(context, t)
+            withContext(Dispatchers.IO) {
+                context.contentResolver.openOutputStream(uri)?.use { it.write(text.toByteArray()) }
+            }
+            android.widget.Toast.makeText(context, R.string.trajet_gpx_saved, android.widget.Toast.LENGTH_LONG).show()
+        }
+    }
+
     fun shareGpx(context: Context) {
         viewModelScope.launch {
             val t = trajet.value?.trajet ?: return@launch
             val file = withContext(Dispatchers.IO) {
-                val gpx = TrackMath.toGpx(context.getString(R.string.trajet_title, t.startedAt.toDateTime()), repository.trackPointsOnce(trajetId))
+                val gpx = gpx(context, t)
                 File(context.cacheDir, "exports").apply { mkdirs() }.resolve("trajet_$trajetId.gpx").apply { writeText(gpx) }
             }
             val uri = JournalContainer.photoStore.uriFor(file.absolutePath)
@@ -127,6 +170,12 @@ fun TrajetScreen(trajetId: Long, onBack: () -> Unit) {
     val live = active == trajetId
     val context = LocalContext.current
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
+    var naming by rememberSaveable { mutableStateOf(false) }
+    val etapes by viewModel.etapes.collectAsStateWithLifecycle()
+    // « Enregistrer le GPX » : le sélecteur de fichiers du système (aucune permission de stockage).
+    val saveLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/gpx+xml")) { uri ->
+        uri?.let { viewModel.saveGpx(context, it) }
+    }
 
     // Pendant l'enregistrement, la durée avance chaque seconde, même sans nouveau point.
     val now by produceState(System.currentTimeMillis(), live) {
@@ -137,10 +186,16 @@ fun TrajetScreen(trajetId: Long, onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.trajet)) },
+                title = { Text(trajet?.nom ?: stringResource(R.string.trajet), maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) } },
                 actions = {
+                    if (trajet != null) {
+                        IconButton(onClick = { naming = true }) { Icon(Icons.Default.Edit, stringResource(R.string.trajet_rename)) }
+                    }
                     if (trajet != null && !live) {
+                        IconButton(onClick = { saveLauncher.launch(gpxFileName(trajet)) }, enabled = points.isNotEmpty()) {
+                            Icon(Icons.Default.Download, stringResource(R.string.trajet_save_gpx))
+                        }
                         IconButton(onClick = { viewModel.shareGpx(context) }, enabled = points.isNotEmpty()) {
                             Icon(Icons.Default.Share, stringResource(R.string.trajet_share_gpx))
                         }
@@ -199,7 +254,10 @@ fun TrajetScreen(trajetId: Long, onBack: () -> Unit) {
 
             if (live) {
                 Button(
-                    onClick = { TrackingService.stop(context) },
+                    onClick = {
+                        TrackingService.stop(context)
+                        if (trajet.nom == null) naming = true // à l'arrêt, on propose de nommer le trajet
+                    },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
@@ -210,6 +268,15 @@ fun TrajetScreen(trajetId: Long, onBack: () -> Unit) {
         }
     }
 
+    if (naming && trajet != null) {
+        NameTrajetDialog(
+            initial = trajet.nom.orEmpty(),
+            etapes = etapes,
+            onDismiss = { naming = false },
+            onSave = { viewModel.rename(it); naming = false },
+        )
+    }
+
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
@@ -218,6 +285,67 @@ fun TrajetScreen(trajetId: Long, onBack: () -> Unit) {
             confirmButton = { TextButton(onClick = { confirmDelete = false; viewModel.delete(onBack) }) { Text(stringResource(R.string.delete)) } },
             dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.cancel)) } },
         )
+    }
+}
+
+/** « de_bavella_a_piana.gpx » : un nom de fichier sans accents ni espaces, lisible partout. */
+private fun gpxFileName(t: Trajet): String {
+    val base = java.text.Normalizer.normalize(t.nom ?: "trajet_${t.id}", java.text.Normalizer.Form.NFD)
+        .replace(Regex("\\p{M}"), "").lowercase().replace(Regex("[^a-z0-9]+"), "_").trim('_')
+    return "${base.ifEmpty { "trajet" }}.gpx"
+}
+
+/**
+ * Nommer un trajet. Le champ est libre ; les deux listes proposent les étapes du voyage
+ * et composent « De <étape> à <étape> » (le cas d'usage : le trajet entre deux étapes).
+ */
+@Composable
+private fun NameTrajetDialog(initial: String, etapes: List<Etape>, onDismiss: () -> Unit, onSave: (String) -> Unit) {
+    var nom by rememberSaveable { mutableStateOf(initial) }
+    var from by rememberSaveable { mutableStateOf<String?>(null) }
+    var to by rememberSaveable { mutableStateOf<String?>(null) }
+    val titres = etapes.sortedBy { it.date }.map { it.titre }
+    fun compose() {
+        val f = from
+        val t = to
+        nom = when {
+            f != null && t != null -> "De $f à $t"
+            f != null -> "Depuis $f"
+            t != null -> "Vers $t"
+            else -> nom
+        }
+    }
+    ModalCard(
+        badge = stringResource(R.string.trajet),
+        title = stringResource(R.string.trajet_rename),
+        subtitle = stringResource(R.string.trajet_rename_subtitle),
+        onDismiss = onDismiss,
+    ) {
+        if (titres.isNotEmpty()) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                EtapePicker(stringResource(R.string.trajet_from), from, titres, Modifier.weight(1f)) { from = it; compose() }
+                EtapePicker(stringResource(R.string.trajet_to), to, titres, Modifier.weight(1f)) { to = it; compose() }
+            }
+        }
+        FormField(stringResource(R.string.trajet_name), nom, { nom = it }, stringResource(R.string.trajet_name_placeholder))
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            SmallButton(stringResource(R.string.cancel), onDismiss, outline = true)
+            PrimaryButton(stringResource(R.string.save), { onSave(nom) }, Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun EtapePicker(label: String, selected: String?, titres: List<String>, modifier: Modifier, onPick: (String) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    Column(modifier) {
+        FieldLabel(label)
+        Box(Modifier.padding(top = 6.dp)) {
+            SmallButton(selected ?: stringResource(R.string.trajet_pick_etape), { open = true }, Modifier.fillMaxWidth(), outline = true)
+            DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+                titres.forEach { t -> DropdownMenuItem(text = { Text(t) }, onClick = { open = false; onPick(t) }) }
+            }
+        }
     }
 }
 

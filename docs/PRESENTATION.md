@@ -77,7 +77,8 @@ La correspondance avec la PWA :
 - Chaque position passe par un filtre (`TrackMath.accept` : précision > 50 m ou moins de 3 m du point précédent → ignorée), puis va dans Room en **une transaction** avec la nouvelle distance. L'écran observe `track_points` et se redessine.
 - Le tracé est dessiné sur un `Canvas` (projection équirectangulaire, longitude × cos(latitude)) : pas de SDK de cartes, pas de clé d'API, ça marche hors ligne.
 - `START_NOT_STICKY` : si l'OS tue le process, on ne relance pas un enregistrement dans le dos de l'utilisateur. Au démarrage suivant, le trajet resté « en cours » est clos à l'heure de son dernier point (`closeOrphanTrajets`).
-- Export **GPX 1.1** (Strava, Komoot, OsmAnd) via `FileProvider`.
+- **Un voyage, plusieurs trajets** (`trajets.voyageId`, CASCADE), chacun **nommé** : la fenêtre « Nommer le trajet » propose « De <étape> à <étape> » à partir des étapes du voyage, proposée aussi à l'arrêt. Le nom est une colonne ajoutée en **v3** (`MIGRATION_2_3`, testée) : la base a migré deux fois.
+- Export **GPX 1.1** (Strava, Komoot, OsmAnd) : *Partager* (FileProvider) ou *Enregistrer* (sélecteur de fichiers du système, `CreateDocument`, aucune permission de stockage). Strava : l'import se fait sur strava.com, pas dans l'app mobile.
 
 **Prouvé sur l'émulateur** (captures 06, 07, 09, 10, 13) : 19 points enregistrés app balayée des récents, écran éteint et en Doze forcé (`deviceidle force-idle`) ; arrêt depuis la notification app fermée ; rotation pendant l'enregistrement ; process tué en plein trajet, trajet clos au redémarrage.
 

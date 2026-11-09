@@ -108,6 +108,9 @@ interface TrajetDao {
     @Query("UPDATE trajets SET distanceM = :distanceM WHERE id = :id")
     suspend fun setDistance(id: Long, distanceM: Double)
 
+    @Query("UPDATE trajets SET nom = :nom WHERE id = :id")
+    suspend fun rename(id: Long, nom: String?)
+
     @Query("UPDATE trajets SET endedAt = :endedAt WHERE id = :id")
     suspend fun finish(id: Long, endedAt: Long)
 

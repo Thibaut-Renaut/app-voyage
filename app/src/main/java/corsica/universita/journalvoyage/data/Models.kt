@@ -40,4 +40,5 @@ data class Trajet(
     val endedAt: Long?,
     val distanceM: Double,
     val pointsCount: Int,
+    val nom: String? = null,
 )

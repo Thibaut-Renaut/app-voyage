@@ -82,6 +82,8 @@ data class TrajetEntity(
     val endedAt: Long? = null,
     /** Mise à jour à chaque point par le service : la liste affiche la distance sans relire tous les points. */
     @ColumnInfo(defaultValue = "0") val distanceM: Double = 0.0,
+    /** v3 : le nom donné par l'utilisateur (« De Bavella à Piana »). NULL = pas encore nommé. */
+    val nom: String? = null,
 )
 
 /** Un relevé GPS. altitude : NULL si le fournisseur n'en donne pas. */

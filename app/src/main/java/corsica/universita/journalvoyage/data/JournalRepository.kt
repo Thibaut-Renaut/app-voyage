@@ -122,6 +122,9 @@ class JournalRepository(
 
     suspend fun finishTrajet(id: Long) = trajetDao.finish(id, System.currentTimeMillis())
 
+    /** Nommer (ou renommer) un trajet ; un nom vide efface le nom (l'écran affiche alors la date). */
+    suspend fun renameTrajet(id: Long, nom: String) = trajetDao.rename(id, nom.trim().ifEmpty { null })
+
     suspend fun closeOrphanTrajets(exceptId: Long?): Int = trajetDao.closeOrphans(exceptId ?: -1)
 
     suspend fun deleteTrajet(id: Long) {
@@ -199,7 +202,7 @@ class JournalRepository(
     }
 }
 
-private fun TrajetWithCount.toTrajet() = with(trajet) { Trajet(id, voyageId, startedAt, endedAt, distanceM, pointsCount) }
+private fun TrajetWithCount.toTrajet() = with(trajet) { Trajet(id, voyageId, startedAt, endedAt, distanceM, pointsCount, nom) }
 
 private fun TrackPointEntity.toPoint() = TrackPoint(lat, lng, altitude, accuracy, time)
 

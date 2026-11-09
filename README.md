@@ -29,7 +29,7 @@ Ou dans Android Studio : *Open* → ce dossier → ▶ *Run 'app'*.
 |---|---|
 | `./gradlew assembleDebug` | APK debug dans `app/build/outputs/apk/debug/` |
 | `./gradlew testDebugUnitTest` | tests JVM : calculs du tracé (distance, dénivelé, GPX) |
-| `./gradlew connectedDebugAndroidTest` | test de la migration Room v1 → v2, sur l'émulateur ou le téléphone (désinstalle l'app à la fin) |
+| `./gradlew connectedDebugAndroidTest` | tests des migrations Room (1 → 2 → 3, et 2 → 3), sur l'émulateur ou le téléphone (désinstalle l'app à la fin) |
 | `./gradlew assembleRelease` | APK release, signée avec la clé de `local.properties` (`RELEASE_STORE_FILE`…), sinon avec la clé debug |
 
 ### Firebase (push et analytics)
@@ -44,7 +44,8 @@ Ou dans Android Studio : *Open* → ce dossier → ▶ *Run 'app'*.
 | Version | versionCode | Base Room | Contenu |
 |---|---|---|---|
 | 1.0 (tag `v1.0`) | 1 | v1 : `voyages`, `etapes`, `photos` | le socle |
-| 2.0 | 2 | v2 : + `trajets`, `track_points` (`MIGRATION_1_2`) | l'enregistreur de trajet |
+| 2.0 (tag `v2.0`) | 2 | v2 : + `trajets`, `track_points` (`MIGRATION_1_2`) | l'enregistreur de trajet |
+| 2.1 | 3 | v3 : + `trajets.nom` (`MIGRATION_2_3`) | nommer un trajet (« De Bavella à Piana »), enregistrer le GPX |
 
 Tester la mise à jour par-dessus l'ancienne version, sans désinstaller :
 
@@ -52,6 +53,14 @@ Tester la mise à jour par-dessus l'ancienne version, sans désinstaller :
 git checkout v1.0 && ./gradlew installDebug      # la 1.0 ; créer des étapes, dont une hors ligne
 git checkout main && ./gradlew installDebug      # la 2.0 par-dessus : la migration tourne, rien n'est perdu
 ```
+
+## Exporter un trajet vers Strava
+
+L'**application** Strava ne sait pas importer un fichier : l'import passe par le **site** strava.com.
+
+1. Dans l'app : ouvrir le trajet (terminé) › icône **Télécharger** › choisir *Téléchargements* (ou Drive). Le fichier s'appelle d'après le nom du trajet, par ex. `de_bavella_a_piana.gpx`.
+2. Sur un ordinateur (ou le navigateur du téléphone en « version pour ordinateur ») : strava.com › **+** (en haut à droite) › **Importer une activité** › **Fichier** › choisir le `.gpx`.
+3. Strava refuse un trajet sans déplacement (un seul point, 0 m) : il faut un vrai parcours.
 
 ## Architecture en une image
 

@@ -216,4 +216,15 @@ Ajoutez votre première aventure ci-dessus !</string>
     <string name="toast_share_received">Contenu partagé ajouté au formulaire de « %s »</string>
     <string name="network_offline">Mode hors ligne — actions synchronisées au retour</string>
     <string name="network_online">Connexion rétablie</string>
+
+    <!-- v3 (2.1) : nommer un trajet, enregistrer son GPX -->
+    <string name="trajet_rename">Nommer le trajet</string>
+    <string name="trajet_rename_subtitle">Par exemple le trajet entre deux étapes du voyage : choisissez-les, ou écrivez librement.</string>
+    <string name="trajet_from">Depuis l’étape</string>
+    <string name="trajet_to">Jusqu’à l’étape</string>
+    <string name="trajet_pick_etape">Choisir…</string>
+    <string name="trajet_name">Nom du trajet</string>
+    <string name="trajet_name_placeholder">Ex : De Bavella à Piana</string>
+    <string name="trajet_save_gpx">Enregistrer le GPX</string>
+    <string name="trajet_gpx_saved">GPX enregistré. Pour Strava : strava.com › + › Importer une activité.</string>
 </resources>
